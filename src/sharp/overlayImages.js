@@ -11,7 +11,7 @@ var t0 = performance.now();
 async function overlayImages() {
   const response = await axios.get(url, { responseType: "arraybuffer" });
   const buffer = Buffer.from(response.data, "utf-8");
-  sharp(buffer)
+  sharp("./images/shirt-resized.png")
     .resize(1200, 1500)
     .composite([
       {
