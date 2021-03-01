@@ -1,5 +1,6 @@
 {
   "name": "svg-processor",
+  "type": "module",
   "version": "1.0.0",
   "description": "SVG Processor",
   "main": "bin/www.js",

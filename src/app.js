@@ -5,7 +5,7 @@ import cors from "cors";
 import logger from "morgan";
 import fileupload from "express-fileupload";
 
-import converterRoutes from "./server/converterRoute";
+import converterRoutes from "./server/converterRoute.js";
 dotenv.config();
 
 // Set up the express app
@@ -20,8 +20,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 //static folder
-app.use(express.static(__dirname + "/assets"));
-app.use(express.static(__dirname + "/downloads"));
+app.use(express.static(process.cwd() + "/assets"));
+app.use(express.static(process.cwd() + "/downloads"));
 
 // parse requests of content-type - application/json
 app.use(bodyParser.json());
@@ -35,8 +35,10 @@ app.use(fileupload());
 converterRoutes(app);
 
 // Setup a default catch-all route that sends back a welcome message in JSON format.
-app.get("/", (req, res) => res.status(200).send({
-  message: "Welcome to Svg processor application",
-}));
+app.get("/", (req, res) =>
+  res.status(200).send({
+    message: "Welcome to Svg processor application",
+  })
+);
 
 export default app;
