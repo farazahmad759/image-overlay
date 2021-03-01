@@ -1,181 +1,134 @@
-"use strict";
+import processImage from "./codec/index.js";
+import fs from "fs";
+import path from "path";
+import sharp from "sharp";
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
-
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-
-var _codec = _interopRequireDefault(require("./codec"));
-
-var _fs = _interopRequireDefault(require("fs"));
-
-var _path = _interopRequireDefault(require("path"));
-
-var _sharp = _interopRequireDefault(require("sharp"));
-
-var converterRoutes = function converterRoutes(app) {
-  app.use(function (req, res, next) {
+const converterRoutes = app => {
+  app.use((req, res, next) => {
     res.header("Access-Control-Allow-Headers", "x-access-token, Origin, Content-Type, Accept");
     next();
   });
-  app.get("/api/v1/convert", /*#__PURE__*/function () {
-    var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(req, res) {
-      var _req$query, data, file, decodedData, __file, pngBinaryResponse, tempSVGFileName, tempPngFileName;
 
-      return _regenerator["default"].wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              //get the params
-              _req$query = req.query, data = _req$query.data, file = _req$query.file; //parse them
+  app.get("/api/v1/convert", async (req, res) => {
+    //get the params
+    const { data, file } = req.query;
+    if (!file) {
+      res.status(500).send("File not provided");
+      return null;
+    }
+    //parse them
+    const decodedData = data ? JSON.parse(data) : [];
+    const __file = file.split("/").pop();
 
-              decodedData = JSON.parse(data);
-              __file = file.split("/").pop(); //process to edit and get the image file
+    //process to edit and get the image file
+    const pngBinaryResponse = await processImage(file, decodedData).catch(err => {
+      //should be able to debug here too; process itself error should be shown here
+      console.log("----> processImageError: ", err, "<-------");
+      return null;
+    });
 
-              _context.next = 5;
-              return (0, _codec["default"])(file, decodedData)["catch"](function (err) {
-                //should be able to debug here too; process itself error should be shown here
-                console.log("----> processImageError: ", err, "<-------");
-                return null;
-              });
+    if (pngBinaryResponse === null) {
+      //----error response to client
+      res.status(500).send("There was an error with the file provided, please clean the image and try again");
+    } else {
+      //----success response to client
 
-            case 5:
-              pngBinaryResponse = _context.sent;
+      //generate the files
+      //generate the SVG
+      const tempSVGFileName = `svg-file-${Date.now()}.svg`;
+      fs.writeFileSync(`downloads/${tempSVGFileName}`, pngBinaryResponse);
 
-              if (!(pngBinaryResponse === null)) {
-                _context.next = 10;
-                break;
-              }
+      //generate the PNG
+      const tempPngFileName = `png-file-${Date.now()}.png`;
+      //check for the size param
+      if (req.query.size) {
+        sharp(`downloads/${tempSVGFileName}`, {
+          density: 2000
+        }).resize(6000, 6000, {
+          //kernel: sharp.kernel.nearest,
+          fit: "contain",
+          position: "right top"
+        }).png().toFile(`downloads/${tempPngFileName}`).then(() => {
+          //send the file to the client
 
-              //----error response to client
-              res.status(500).send("There was an error with the file provided, please clean the image and try again");
-              _context.next = 20;
-              break;
+          res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), err => {
+            if (err) {
+              console.log(err);
+            } else {
+              //---delete the files after it is sent
+              //delete the svg file
 
-            case 10:
-              //----success response to client
-              //generate the files
-              //generate the SVG
-              tempSVGFileName = "svg-file-".concat(Date.now(), ".svg");
-
-              _fs["default"].writeFileSync("downloads/".concat(tempSVGFileName), pngBinaryResponse); //generate the PNG
-
-
-              tempPngFileName = "png-file-".concat(Date.now(), ".png"); //check for the size param
-
-              if (!req.query.size) {
-                _context.next = 17;
-                break;
-              }
-
-              (0, _sharp["default"])("downloads/".concat(tempSVGFileName), {
-                density: 2000
-              }).resize(6000, 6000, {
-                //kernel: sharp.kernel.nearest,
-                fit: 'contain',
-                position: 'right top'
-              }).png().toFile("downloads/".concat(tempPngFileName)).then(function () {
-                //send the file to the client
-                res.sendFile(_path["default"].resolve("./downloads/".concat(tempPngFileName)), function (err) {
-                  if (err) {
-                    console.log(err);
-                  } else {
-                    //---delete the files after it is sent
-                    //delete the svg file 
-                    _fs["default"].unlinkSync("./downloads/".concat(tempSVGFileName), function (err) {
-                      if (err) {
-                        console.log("couldnt delete the file", err);
-                      } else {
-                        console.log("file was deleted successfully");
-                      }
-                    }); //delete the png file
-
-
-                    _fs["default"].unlinkSync("./downloads/".concat(tempPngFileName), function (err) {
-                      if (err) {
-                        console.log("couldnt delete the file", err);
-                      } else {
-                        console.log("file was deleted successfully");
-                      }
-                    });
-
-                    if (_fs["default"].existsSync("./downloads/".concat(__file))) {
-                      _fs["default"].unlinkSync("./downloads/".concat(__file), function (err) {
-                        if (err) {
-                          console.log("couldnt delete the file", err);
-                        } else {
-                          console.log("file was deleted successfully");
-                        }
-                      });
-                    }
-                  }
-                });
-              })["catch"](function (err) {
-                console.log(err);
-              });
-              _context.next = 20;
-              break;
-
-            case 17:
-              _context.next = 19;
-              return (0, _sharp["default"])("downloads/".concat(tempSVGFileName)).png().toFile("downloads/".concat(tempPngFileName));
-
-            case 19:
-              //send the file to the client
-              res.sendFile(_path["default"].resolve("./downloads/".concat(tempPngFileName)), function (err) {
+              fs.unlinkSync(`./downloads/${tempSVGFileName}`, err => {
                 if (err) {
-                  console.log(err);
+                  console.log("couldnt delete the file", err);
                 } else {
-                  //---delete the files after it is sent
-                  //delete the svg file 
-                  _fs["default"].unlinkSync("./downloads/".concat(tempSVGFileName), function (err) {
-                    if (err) {
-                      console.log("couldnt delete the file", err);
-                    } else {
-                      console.log("file was deleted successfully");
-                    }
-                  }); //delete the png file
-
-
-                  _fs["default"].unlinkSync("./downloads/".concat(tempPngFileName), function (err) {
-                    if (err) {
-                      console.log("couldnt delete the file", err);
-                    } else {
-                      console.log("file was deleted successfully");
-                    }
-                  });
-
-                  if (_fs["default"].existsSync("./downloads/".concat(__file))) {
-                    _fs["default"].unlinkSync("./downloads/".concat(__file), function (err) {
-                      if (err) {
-                        console.log("couldnt delete the file", err);
-                      } else {
-                        console.log("file was deleted successfully");
-                      }
-                    });
-                  }
+                  console.log("file was deleted successfully");
                 }
               });
 
-            case 20:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee);
-    }));
+              //delete the png file
+              fs.unlinkSync(`./downloads/${tempPngFileName}`, err => {
+                if (err) {
+                  console.log("couldnt delete the file", err);
+                } else {
+                  console.log("file was deleted successfully");
+                }
+              });
+              if (fs.existsSync(`./downloads/${__file}`)) {
+                fs.unlinkSync(`./downloads/${__file}`, err => {
+                  if (err) {
+                    console.log("couldnt delete the file", err);
+                  } else {
+                    console.log("file was deleted successfully");
+                  }
+                });
+              }
+            }
+          });
+        }).catch(err => {
+          console.log(err);
+        });
+      } else {
+        await sharp(`downloads/${tempSVGFileName}`).png().toFile(`downloads/${tempPngFileName}`);
+        //send the file to the client
 
-    return function (_x, _x2) {
-      return _ref.apply(this, arguments);
-    };
-  }());
+        res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), err => {
+          if (err) {
+            console.log(err);
+          } else {
+            //---delete the files after it is sent
+            //delete the svg file
+
+            fs.unlinkSync(`./downloads/${tempSVGFileName}`, err => {
+              if (err) {
+                console.log("couldnt delete the file", err);
+              } else {
+                console.log("file was deleted successfully");
+              }
+            });
+
+            //delete the png file
+            fs.unlinkSync(`./downloads/${tempPngFileName}`, err => {
+              if (err) {
+                console.log("couldnt delete the file", err);
+              } else {
+                console.log("file was deleted successfully");
+              }
+            });
+            if (fs.existsSync(`./downloads/${__file}`)) {
+              fs.unlinkSync(`./downloads/${__file}`, err => {
+                if (err) {
+                  console.log("couldnt delete the file", err);
+                } else {
+                  console.log("file was deleted successfully");
+                }
+              });
+            }
+          }
+        });
+      }
+    }
+  });
 };
 
-var _default = converterRoutes;
-exports["default"] = _default;
+export default converterRoutes;

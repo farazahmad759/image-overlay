@@ -165,13 +165,14 @@ const processImage = async (file, spec) => {
     //loop through all the objects
     spec.map((obj) => {
       const { id, property, value } = obj;
-      if (!id || !property || !value) {
-        console.log("ERROR: id, property and value cannot be null");
+      if (id && property && value) {
+        let _lowercase = property.toLowerCase();
+        //make changes to the svg
+        modifySVG(rootCanvas, id, _lowercase, value);
+      } else {
+        console.log("ERROR: Data's id, property and value cannot be null");
         return null;
       }
-      let _lowercase = property.toLowerCase();
-      //make changes to the svg
-      modifySVG(rootCanvas, id, _lowercase, value);
     });
 
     //return the modified svg

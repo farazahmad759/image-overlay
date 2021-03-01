@@ -1,53 +1,42 @@
-"use strict";
+import express from "express";
+import dotenv from "dotenv";
+import bodyParser from "body-parser";
+import cors from "cors";
+import logger from "morgan";
+import fileupload from "express-fileupload";
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+import converterRoutes from "./server/converterRoute.js";
+dotenv.config();
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
+// Set up the express app
+const app = express();
 
-var _express = _interopRequireDefault(require("express"));
+// Log requests to the console
+app.use(logger("dev"));
 
-var _dotenv = _interopRequireDefault(require("dotenv"));
-
-var _bodyParser = _interopRequireDefault(require("body-parser"));
-
-var _cors = _interopRequireDefault(require("cors"));
-
-var _morgan = _interopRequireDefault(require("morgan"));
-
-var _expressFileupload = _interopRequireDefault(require("express-fileupload"));
-
-var _converterRoute = _interopRequireDefault(require("./server/converterRoute"));
-
-_dotenv["default"].config(); // Set up the express app
-
-
-var app = (0, _express["default"])(); // Log requests to the console
-
-app.use((0, _morgan["default"])("dev"));
-var corsOptions = {
+const corsOptions = {
   origin: "*"
 };
-app.use((0, _cors["default"])(corsOptions)); //static folder
 
-app.use(_express["default"]["static"](__dirname + "/assets"));
-app.use(_express["default"]["static"](__dirname + "/downloads")); // parse requests of content-type - application/json
+app.use(cors(corsOptions));
+//static folder
+app.use(express.static(process.cwd() + "/assets"));
+app.use(express.static(process.cwd() + "/downloads"));
 
-app.use(_bodyParser["default"].json()); // parse requests of content-type - application/x-www-form-urlencoded
+// parse requests of content-type - application/json
+app.use(bodyParser.json());
 
-app.use(_bodyParser["default"].urlencoded({
-  extended: true
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(fileupload());
+
+// routes
+converterRoutes(app);
+
+// Setup a default catch-all route that sends back a welcome message in JSON format.
+app.get("/", (req, res) => res.status(200).send({
+  message: "Welcome to Svg processor application"
 }));
-app.use((0, _expressFileupload["default"])()); // routes
 
-(0, _converterRoute["default"])(app); // Setup a default catch-all route that sends back a welcome message in JSON format.
-
-app.get("/", function (req, res) {
-  return res.status(200).send({
-    message: "Welcome to Svg processor application"
-  });
-});
-var _default = app;
-exports["default"] = _default;
+export default app;
