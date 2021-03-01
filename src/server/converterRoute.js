@@ -15,6 +15,10 @@ const converterRoutes = (app) => {
   app.get("/api/v1/convert", async (req, res) => {
     //get the params
     const { data, file } = req.query;
+    if (!file) {
+      res.status(500).send("File not provided");
+      return null;
+    }
     //parse them
     const decodedData = data ? JSON.parse(data) : [];
     const __file = file.split("/").pop();
