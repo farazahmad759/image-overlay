@@ -1,7 +1,8 @@
 import express from "express";
-import { overlayImages, blablabla } from "./../controllers/overlay.js";
+import { resizeImages, overlayImages } from "../controllers/imageOperations.js";
 var router = express.Router();
 
-router.get("/v1/overlayImages", blablabla);
+router.get("/v1/resizeImages", resizeImages);
+router.get("/v1/overlayImages", overlayImages);
 
 export default router;

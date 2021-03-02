@@ -22,6 +22,7 @@ app.use(cors(corsOptions));
 //static folder
 app.use(express.static(process.cwd() + "/assets"));
 app.use(express.static(process.cwd() + "/downloads"));
+app.use(express.static(process.cwd() + "/images"));
 
 // parse requests of content-type - application/json
 app.use(bodyParser.json());
