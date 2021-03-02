@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import logger from "morgan";
 import fileupload from "express-fileupload";
-
+import router from "./routes/api.js";
 import converterRoutes from "./server/converterRoute.js";
 dotenv.config();
 
@@ -33,6 +33,7 @@ app.use(fileupload());
 
 // routes
 converterRoutes(app);
+app.use("/api", router);
 
 // Setup a default catch-all route that sends back a welcome message in JSON format.
 app.get("/", (req, res) =>

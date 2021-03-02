@@ -6,7 +6,7 @@ import app from "../app.js"; // The express app we just created
 
 //const debug = Debug("http");
 //const port = parseInt(process.env.PORT, 10) || 8083;
-const port = 80;
+const port = 6000; //production value = 80
 app.set("port", port);
 
 const server = http.createServer(app);

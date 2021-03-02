@@ -26,6 +26,13 @@ async function modifySVG(rootCanvas, id, property, value) {
   } else if (property === "background-image") {
     //background encoding
     const backgroundImage = "assets/" + value;
+    if (!fs.existsSync(backgroundImage, "base64")) {
+      console.log(
+        "ERROR: no such file or directory",
+        "assets/" + backgroundImage
+      );
+      return null;
+    }
     const toBase64 = fs.readFileSync(backgroundImage, "base64");
 
     //svg processing
@@ -66,10 +73,10 @@ async function modifySVG(rootCanvas, id, property, value) {
       let rootX = 0;
       let rootY = 0;
 
-      if (topSVG.width()) {
+      if (topSVG && topSVG.width()) {
         rootWidth = topSVG.width();
       }
-      if (topSVG.height()) {
+      if (topSVG && topSVG.height()) {
         rootWidth = topSVG.height();
       }
 
