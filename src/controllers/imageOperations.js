@@ -5,6 +5,7 @@ let url =
 import sharp from "sharp";
 import { performance } from "perf_hooks";
 import yargs from "yargs";
+import fs from "fs";
 let { options } = yargs;
 
 export function resizeImages(req, res) {
@@ -48,6 +49,20 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  //
+  if (fs.existsSync(`./downloads/jjj.png`)) {
+    fs.unlinkSync(`./downloads/jjj.png`, (err) => {
+      if (err) {
+        console.log("couldnt delete the file", err);
+      } else {
+        console.log("file was deleted successfully");
+      }
+    });
+  } else {
+    console.log("file does not exist");
+  }
+
+  //
   var t0 = performance.now();
 
   const response = await axios.get(url, { responseType: "arraybuffer" });
@@ -72,12 +87,18 @@ export async function overlayImages(req, res) {
       },
     ])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
+    // .toBuffer()
+    // .then((data) => {
+    //   // sharp(data)
+    //   //   .resize(300, 400)
+    //   //   .toBuffer()
+    //   //   .then((d) => {
+    //   //     res.end(Buffer.from(d, "base64"));
+    //   //   });
+    // });
     .toFile("./images/sharp/output.jpg", function (err) {
       console.log("error: ", err);
       var t1 = performance.now();
-      // res.send({
-      //   timeTaken: (t1 - t0) / 1000 + " seconds",
-      // });
       res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
     });
 }
