@@ -51,70 +51,71 @@ export function resizeImages(req, res) {
 export async function overlayImages(req, res) {
   var t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
-  // if (
-  //   !logoUrl
-  //   // || !sneakerUrl || !designUrl || !mainUrl
-  // ) {
-  //   res.send({
-  //     error: "Please provide all necessary parameters",
-  //   });
-  //   return null;
-  // }
-  const mainImg = mainUrl
-    ? Buffer.from(
-        (await axios.get(mainUrl, { responseType: "arraybuffer" })).data,
-        "utf-8"
-      )
-    : "./images/shirt-resized.png";
-  const logoImg = logoUrl ? await sharp(Buffer.from(
-    (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
-    "utf-8"
-  )).resize(200,300).toBuffer(): "./images/logo-resized.png";
-  let designImg = designUrl
-    ? Buffer.from(
-        (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
-        "utf-8"
-      )
-    : "./images/design-resized.png";
-  const sneakerImg = sneakerUrl
-    ? Buffer.from(
-        (await axios.get(sneakerUrl, { responseType: "arraybuffer" })).data,
-        "utf-8"
-      )
-    : "./images/sneaker-resized.png";
-  sharp(mainImg)
+  if (!mainUrl || !logoUrl || !sneakerUrl || !designUrl) {
+    res.send({
+      error: "Please provide all necessary parameters",
+    });
+    return null;
+  }
+  if (
+    !fs.existsSync(`./${mainUrl}`) ||
+    !fs.existsSync(`./${logoUrl}`) ||
+    !fs.existsSync(`./${sneakerUrl}`)
+  ) {
+    res.send({
+      error: "Image does not exist",
+    });
+    return null;
+  }
+  // let designImg = designUrl
+  //   ? Buffer.from(
+  //       (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
+  //       "utf-8"
+  //     )
+  //   : "./images/design-resized.png";
+  let outputImg = await sharp("./" + mainUrl)
     .resize(1200, 1500)
     .composite([
       {
-        input: logoImg,
+        input: "./" + logoUrl,
         gravity: "southeast",
         top: 10,
         left: 700,
       },
+      // {
+      //   input: designImg,
+      // },
       {
-        input: designImg,
-      },
-      {
-        input: sneakerImg,
+        input: "./" + sneakerUrl,
         gravity: "southeast",
         top: 900,
         left: 10,
       },
     ])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
-    // .toBuffer()
-    // .then((data) => {
-    //   // sharp(data)
-    //   //   .resize(300, 400)
-    //   //   .toBuffer()
-    //   //   .then((d) => {
-    //   //     res.end(Buffer.from(d, "base64"));
-    //   //   });
-    // });
-    .toFile("./images/sharp/output.jpg", function (err) {
-      console.log("error: ", err);
-      var t1 = performance.now();
+    .toBuffer();
+  // .then((data) => {
+  //   // sharp(data)
+  //   //   .resize(300, 400)
+  //   //   .toBuffer()
+  //   //   .then((d) => {
+  //   //     res.end(Buffer.from(d, "base64"));
+  //   //   });
+  // });
+  // .toFile("./images/sharp/output.jpg", function (err) {
+  //   console.log("error: ", err);
+  //   var t1 = performance.now();
 
-      res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
-    });
+  //   res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
+  // });
+  res.end(Buffer.from(outputImg, "base64"));
+}
+
+function getImgFromSymlink(path) {
+  let outImg = Buffer.from("./" + path);
+
+  // const logoImg = logoUrl ? await sharp(Buffer.from(
+  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
+  //   "utf-8"
+  // )).resize(200,300).toBuffer(): "./images/logo-resized.png";
 }
