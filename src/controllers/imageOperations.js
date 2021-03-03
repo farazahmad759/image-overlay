@@ -66,11 +66,11 @@ export async function overlayImages(req, res) {
         "utf-8"
       )
     : "./images/shirt-resized.png";
-  // const logoImg = Buffer.from(
-  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
-  //   "utf-8"
-  // );
-  const designImg = designUrl
+  const logoImg = logoUrl ? await sharp(Buffer.from(
+    (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
+    "utf-8"
+  )).resize(200,300).toBuffer(): "./images/logo-resized.png";
+  let designImg = designUrl
     ? Buffer.from(
         (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
         "utf-8"
@@ -86,7 +86,7 @@ export async function overlayImages(req, res) {
     .resize(1200, 1500)
     .composite([
       {
-        input: "./images/logo-resized.png",
+        input: logoImg,
         gravity: "southeast",
         top: 10,
         left: 700,
@@ -114,6 +114,7 @@ export async function overlayImages(req, res) {
     .toFile("./images/sharp/output.jpg", function (err) {
       console.log("error: ", err);
       var t1 = performance.now();
+
       res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
     });
 }

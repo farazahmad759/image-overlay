@@ -29,7 +29,7 @@ async function modifySVG(rootCanvas, id, property, value) {
     if (!fs.existsSync(backgroundImage, "base64")) {
       console.log(
         "ERROR: no such file or directory",
-        "assets/" + backgroundImage
+        backgroundImage
       );
       return null;
     }
