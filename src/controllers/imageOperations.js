@@ -49,25 +49,40 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
-  //
-  if (fs.existsSync(`./downloads/jjj.png`)) {
-    fs.unlinkSync(`./downloads/jjj.png`, (err) => {
-      if (err) {
-        console.log("couldnt delete the file", err);
-      } else {
-        console.log("file was deleted successfully");
-      }
-    });
-  } else {
-    console.log("file does not exist");
-  }
-
-  //
   var t0 = performance.now();
-
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  const buffer = Buffer.from(response.data, "utf-8");
-  sharp("./images/shirt-resized.png")
+  let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
+  // if (
+  //   !logoUrl
+  //   // || !sneakerUrl || !designUrl || !mainUrl
+  // ) {
+  //   res.send({
+  //     error: "Please provide all necessary parameters",
+  //   });
+  //   return null;
+  // }
+  const mainImg = mainUrl
+    ? Buffer.from(
+        (await axios.get(mainUrl, { responseType: "arraybuffer" })).data,
+        "utf-8"
+      )
+    : "./images/shirt-resized.png";
+  // const logoImg = Buffer.from(
+  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
+  //   "utf-8"
+  // );
+  const designImg = designUrl
+    ? Buffer.from(
+        (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
+        "utf-8"
+      )
+    : "./images/design-resized.png";
+  const sneakerImg = sneakerUrl
+    ? Buffer.from(
+        (await axios.get(sneakerUrl, { responseType: "arraybuffer" })).data,
+        "utf-8"
+      )
+    : "./images/sneaker-resized.png";
+  sharp(mainImg)
     .resize(1200, 1500)
     .composite([
       {
@@ -77,13 +92,13 @@ export async function overlayImages(req, res) {
         left: 700,
       },
       {
-        input: "./images/sneaker-resized.png",
+        input: designImg,
+      },
+      {
+        input: sneakerImg,
         gravity: "southeast",
         top: 900,
         left: 10,
-      },
-      {
-        input: "./images/design-resized.png",
       },
     ])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
