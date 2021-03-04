@@ -67,14 +67,14 @@ export async function overlayImages(req, res) {
     });
     return null;
   }
-  // let designImg = designUrl
-  //   ? Buffer.from(
-  //       (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
-  //       "utf-8"
-  //     )
-  //   : "./images/design-resized.png";
+  let designImg = designUrl
+    ? Buffer.from(
+        (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
+        "utf-8"
+      )
+    : "./images/design-resized.png";
   let outputImg = await sharp("./" + mainUrl)
-    .resize(1200, 1500)
+    // .resize(1200, 1500)
     .composite([
       {
         input: "./" + logoUrl,
@@ -82,9 +82,9 @@ export async function overlayImages(req, res) {
         top: 10,
         left: 700,
       },
-      // {
-      //   input: designImg,
-      // },
+      {
+        input: designImg,
+      },
       {
         input: "./" + sneakerUrl,
         gravity: "southeast",
