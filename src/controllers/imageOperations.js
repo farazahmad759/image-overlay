@@ -6,6 +6,7 @@ import sharp from "sharp";
 import { performance } from "perf_hooks";
 import yargs from "yargs";
 import fs from "fs";
+import sizeOf from "image-size";
 let { options } = yargs;
 
 export function resizeImages(req, res) {
@@ -51,7 +52,7 @@ export function resizeImages(req, res) {
 export async function overlayImages(req, res) {
   var t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
-  if (!mainUrl || !logoUrl || !sneakerUrl || !designUrl) {
+  if (!mainUrl || !logoUrl || !sneakerUrl) {
     res.send({
       error: "Please provide all necessary parameters",
     });
@@ -69,8 +70,12 @@ export async function overlayImages(req, res) {
   }
 
   let mainImg = await sharp("./" + mainUrl);
-  let logoImg = await sharp("./" + logoUrl);
-  let sneakerImg = await sharp("./" + sneakerUrl);
+  let logoImg = await sharp("./" + logoUrl)
+    .resize(400, 200)
+    .toBuffer();
+  let sneakerImg = await sharp("./" + sneakerUrl)
+    .resize(400, 200)
+    .toBuffer();
   let designImg = designUrl
     ? Buffer.from(
         (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
@@ -81,16 +86,17 @@ export async function overlayImages(req, res) {
   // get dimensions
   let metadata = {};
   metadata.mainImg = await mainImg.metadata();
-  metadata.logoImg = await logoImg.metadata();
-  metadata.sneakerImg = await sneakerImg.metadata();
+  metadata.logoImg = sizeOf(logoUrl);
+  metadata.sneakerImg = sizeOf(sneakerImg);
 
   // console.log(metadata);
   // get output image
+  let currentData = Date.now();
   let outputImg = await sharp("./" + mainUrl)
     // .resize(1200, 1500)
     .composite([
       {
-        input: "./" + logoUrl,
+        input: logoImg,
         gravity: "southeast",
         top: 0,
         left: metadata.mainImg.width - metadata.logoImg.width,
@@ -99,29 +105,31 @@ export async function overlayImages(req, res) {
         input: designImg,
       },
       {
-        input: "./" + sneakerUrl,
+        input: sneakerImg,
         gravity: "southeast",
         top: metadata.mainImg.height - metadata.sneakerImg.height,
         left: 10,
       },
     ])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
-    .toBuffer();
-  // .then((data) => {
-  //   // sharp(data)
-  //   //   .resize(300, 400)
-  //   //   .toBuffer()
-  //   //   .then((d) => {
-  //   //     res.end(Buffer.from(d, "base64"));
-  //   //   });
-  // });
-  // .toFile("./images/sharp/output.jpg", function (err) {
-  //   console.log("error: ", err);
-  //   var t1 = performance.now();
+    //   .toBuffer();
+    // .then((data) => {
+    //   // sharp(data)
+    //   //   .resize(300, 400)
+    //   //   .toBuffer()
+    //   //   .then((d) => {
+    //   //     res.end(Buffer.from(d, "base64"));
+    //   //   });
+    // });
+    .toFile(`./images/sharp/output-${currentData}.jpg`, function (err) {
+      console.log("error: ", err);
+      var t1 = performance.now();
 
-  //   res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
-  // });
-  res.end(Buffer.from(outputImg, "base64"));
+      res.sendFile(`output-${currentData}.jpg`, {
+        root: process.cwd() + "/images/sharp/",
+      });
+    });
+  // res.end(Buffer.from(outputImg, "base64"));
 }
 
 function getImgFromSymlink(path) {
