@@ -8,19 +8,24 @@ const converterRoutes = app => {
     res.header("Access-Control-Allow-Headers", "x-access-token, Origin, Content-Type, Accept");
     next();
   });
-
   app.get("/api/v1/convert", async (req, res) => {
     //get the params
-    const { data, file } = req.query;
+    const {
+      data,
+      file
+    } = req.query;
+
     if (!file) {
       res.status(500).send("File not provided");
       return null;
-    }
-    //parse them
-    const decodedData = data ? JSON.parse(data) : [];
-    const __file = file.split("/").pop();
+    } //parse them
 
-    //process to edit and get the image file
+
+    const decodedData = data ? JSON.parse(data) : [];
+
+    const __file = file.split("/").pop(); //process to edit and get the image file
+
+
     const pngBinaryResponse = await processImage(file, decodedData).catch(err => {
       //should be able to debug here too; process itself error should be shown here
       console.log("----> processImageError: ", err, "<-------");
@@ -32,15 +37,13 @@ const converterRoutes = app => {
       res.status(500).send("There was an error with the file provided, please clean the image and try again");
     } else {
       //----success response to client
-
       //generate the files
       //generate the SVG
       const tempSVGFileName = `svg-file-${Date.now()}.svg`;
-      fs.writeFileSync(`downloads/${tempSVGFileName}`, pngBinaryResponse);
+      fs.writeFileSync(`downloads/${tempSVGFileName}`, pngBinaryResponse); //generate the PNG
 
-      //generate the PNG
-      const tempPngFileName = `png-file-${Date.now()}.png`;
-      //check for the size param
+      const tempPngFileName = `png-file-${Date.now()}.png`; //check for the size param
+
       if (req.query.size) {
         sharp(`downloads/${tempSVGFileName}`, {
           density: 2000
@@ -50,14 +53,12 @@ const converterRoutes = app => {
           position: "right top"
         }).png().toFile(`downloads/${tempPngFileName}`).then(() => {
           //send the file to the client
-
           res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), err => {
             if (err) {
               console.log(err);
             } else {
               //---delete the files after it is sent
               //delete the svg file
-
               if (fs.existsSync(`./downloads/${tempSVGFileName}`)) {
                 fs.unlinkSync(`./downloads/${tempSVGFileName}`, err => {
                   if (err) {
@@ -66,8 +67,9 @@ const converterRoutes = app => {
                     console.log("file was deleted successfully");
                   }
                 });
-              }
-              //delete the png file
+              } //delete the png file
+
+
               if (fs.existsSync(`./downloads/${tempPngFileName}`)) {
                 fs.unlinkSync(`./downloads/${tempPngFileName}`, err => {
                   if (err) {
@@ -77,6 +79,7 @@ const converterRoutes = app => {
                   }
                 });
               }
+
               if (fs.existsSync(`./downloads/${__file}`)) {
                 fs.unlinkSync(`./downloads/${__file}`, err => {
                   if (err) {
@@ -92,8 +95,7 @@ const converterRoutes = app => {
           console.log(err);
         });
       } else {
-        await sharp(`downloads/${tempSVGFileName}`).png().toFile(`downloads/${tempPngFileName}`);
-        //send the file to the client
+        await sharp(`downloads/${tempSVGFileName}`).png().toFile(`downloads/${tempPngFileName}`); //send the file to the client
 
         res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), err => {
           if (err) {
@@ -101,16 +103,14 @@ const converterRoutes = app => {
           } else {
             //---delete the files after it is sent
             //delete the svg file
-
             fs.unlinkSync(`./downloads/${tempSVGFileName}`, err => {
               if (err) {
                 console.log("couldnt delete the file", err);
               } else {
                 console.log("file was deleted successfully");
               }
-            });
+            }); //delete the png file
 
-            //delete the png file
             fs.unlinkSync(`./downloads/${tempPngFileName}`, err => {
               if (err) {
                 console.log("couldnt delete the file", err);
@@ -118,6 +118,7 @@ const converterRoutes = app => {
                 console.log("file was deleted successfully");
               }
             });
+
             if (fs.existsSync(`./downloads/${__file}`)) {
               fs.unlinkSync(`./downloads/${__file}`, err => {
                 if (err) {

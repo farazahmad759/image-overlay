@@ -6,39 +6,31 @@ import logger from "morgan";
 import fileupload from "express-fileupload";
 import router from "./routes/api.js";
 import converterRoutes from "./server/converterRoute.js";
-dotenv.config();
+dotenv.config(); // Set up the express app
 
-// Set up the express app
-const app = express();
+const app = express(); // Log requests to the console
 
-// Log requests to the console
 app.use(logger("dev"));
-
 const corsOptions = {
   origin: "*"
 };
+app.use(cors(corsOptions)); //static folder
 
-app.use(cors(corsOptions));
-//static folder
 app.use(express.static(process.cwd() + "/assets"));
 app.use(express.static(process.cwd() + "/downloads"));
-app.use(express.static(process.cwd() + "/images"));
+app.use(express.static(process.cwd() + "/images")); // parse requests of content-type - application/json
 
-// parse requests of content-type - application/json
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // parse requests of content-type - application/x-www-form-urlencoded
 
-// parse requests of content-type - application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
+app.use(fileupload()); // routes
 
-app.use(fileupload());
-
-// routes
 converterRoutes(app);
-app.use("/api", router);
+app.use("/api", router); // Setup a default catch-all route that sends back a welcome message in JSON format.
 
-// Setup a default catch-all route that sends back a welcome message in JSON format.
 app.get("/", (req, res) => res.status(200).send({
   message: "Welcome to Svg processor application"
 }));
-
 export default app;

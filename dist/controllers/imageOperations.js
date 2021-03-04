@@ -1,12 +1,12 @@
 import axios from "axios";
 let url = "https://matchkicks.com/wp-content/uploads/2021/01/Sneaker-Mocks-2021-01-20T205048.889-300x300.png";
-
 import sharp from "sharp";
 import { performance } from "perf_hooks";
 import yargs from "yargs";
 import fs from "fs";
-let { options } = yargs;
-
+let {
+  options
+} = yargs;
 export function resizeImages(req, res) {
   let MKStandardWidth = 1008;
   let MKStandardHeight = 1152;
@@ -30,49 +30,70 @@ export function resizeImages(req, res) {
       console.log("error: ", err);
     }
   });
-
   res.send({
     done: "done"
   });
 }
-
 /**
  * overlayImages
  */
+
 export async function overlayImages(req, res) {
   var t0 = performance.now();
-  let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
-  // if (
-  //   !logoUrl
-  //   // || !sneakerUrl || !designUrl || !mainUrl
-  // ) {
-  //   res.send({
-  //     error: "Please provide all necessary parameters",
-  //   });
-  //   return null;
-  // }
-  const mainImg = mainUrl ? Buffer.from((await axios.get(mainUrl, { responseType: "arraybuffer" })).data, "utf-8") : "./images/shirt-resized.png";
-  // const logoImg = Buffer.from(
-  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
-  //   "utf-8"
-  // );
-  const designImg = designUrl ? Buffer.from((await axios.get(designUrl, { responseType: "arraybuffer" })).data, "utf-8") : "./images/design-resized.png";
-  const sneakerImg = sneakerUrl ? Buffer.from((await axios.get(sneakerUrl, { responseType: "arraybuffer" })).data, "utf-8") : "./images/sneaker-resized.png";
-  sharp(mainImg).resize(1200, 1500).composite([{
-    input: "./images/logo-resized.png",
+  let {
+    logoUrl,
+    sneakerUrl,
+    designUrl,
+    mainUrl
+  } = req.query;
+
+  if (!mainUrl || !logoUrl || !sneakerUrl || !designUrl) {
+    res.send({
+      error: "Please provide all necessary parameters"
+    });
+    return null;
+  }
+
+  if (!fs.existsSync(`./${mainUrl}`) || !fs.existsSync(`./${logoUrl}`) || !fs.existsSync(`./${sneakerUrl}`)) {
+    res.send({
+      error: "Image does not exist"
+    });
+    return null;
+  }
+
+  let mainImg = await sharp("./" + mainUrl);
+  let logoImg = await sharp("./" + logoUrl);
+  let sneakerImg = await sharp("./" + sneakerUrl);
+  let designImg = designUrl ? Buffer.from((await axios.get(designUrl, {
+    responseType: "arraybuffer"
+  })).data, "utf-8") : "./images/design-resized.png"; // get dimensions
+
+  let metadata = {};
+  metadata.mainImg = await mainImg.metadata();
+  metadata.logoImg = await logoImg.metadata();
+  metadata.sneakerImg = await sneakerImg.metadata(); // console.log(metadata);
+  // get output image
+
+  let outputImg = await sharp("./" + mainUrl) // .resize(1200, 1500)
+  .composite([{
+    input: "./" + logoUrl,
     gravity: "southeast",
-    top: 10,
-    left: 700
+    top: 0,
+    left: metadata.mainImg.width - metadata.logoImg.width
   }, {
     input: designImg
   }, {
-    input: sneakerImg,
+    input: "./" + sneakerUrl,
     gravity: "southeast",
-    top: 900,
+    top: metadata.mainImg.height - metadata.sneakerImg.height,
     left: 10
-  }]).flatten({ background: { r: 255, g: 255, b: 255 } })
-  // .toBuffer()
-  // .then((data) => {
+  }]).flatten({
+    background: {
+      r: 255,
+      g: 255,
+      b: 255
+    }
+  }).toBuffer(); // .then((data) => {
   //   // sharp(data)
   //   //   .resize(300, 400)
   //   //   .toBuffer()
@@ -80,9 +101,18 @@ export async function overlayImages(req, res) {
   //   //     res.end(Buffer.from(d, "base64"));
   //   //   });
   // });
-  .toFile("./images/sharp/output.jpg", function (err) {
-    console.log("error: ", err);
-    var t1 = performance.now();
-    res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
-  });
+  // .toFile("./images/sharp/output.jpg", function (err) {
+  //   console.log("error: ", err);
+  //   var t1 = performance.now();
+  //   res.sendFile("output.jpg", { root: process.cwd() + "/images/sharp/" });
+  // });
+
+  res.end(Buffer.from(outputImg, "base64"));
+}
+
+function getImgFromSymlink(path) {
+  let outImg = Buffer.from("./" + path); // const logoImg = logoUrl ? await sharp(Buffer.from(
+  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
+  //   "utf-8"
+  // )).resize(200,300).toBuffer(): "./images/logo-resized.png";
 }
