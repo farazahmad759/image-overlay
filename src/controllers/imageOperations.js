@@ -99,7 +99,7 @@ export async function overlayImages(req, res) {
   // get dimensions
   let metadata = {};
   metadata.mainImg = await mainImg.metadata();
-  metadata.logoImg = sizeOf(logoUrl);
+  metadata.logoImg = sizeOf(logoImg);
   metadata.sneakerImg = sizeOf(sneakerImg);
 
   // console.log(metadata);
