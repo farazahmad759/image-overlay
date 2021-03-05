@@ -147,3 +147,56 @@ function getImgFromSymlink(path) {
   //   "utf-8"
   // )).resize(200,300).toBuffer(): "./images/logo-resized.png";
 }
+
+export async function getAnImageLocally(req, res) {
+  //
+  let t0 = performance.now();
+  if (!req.query.path) {
+    res.send({
+      error: "Please provide a path to image",
+    });
+    return null;
+  }
+  if (!fs.existsSync(req.query.path)) {
+    res.send({
+      error: "The file you are trying to access is not available",
+    });
+    return null;
+  }
+  // res.sendFile(req.query.path, { root: process.cwd() });
+
+  let out = await sharp(req.query.path).toBuffer();
+  let t1 = performance.now();
+  // console.log("Time (ms) to fetch an Image by an API = ", t1 - t0);
+  res.end(Buffer.from(out, "base64"));
+}
+
+export async function getAnImageFromApi(req, res) {
+  //
+  let t0 = performance.now();
+  if (!req.query.path) {
+    res.send({
+      error: "Please provide a path to image",
+    });
+    return null;
+  }
+
+  const out = await sharp(
+    Buffer.from(
+      (
+        await axios.get(
+          `http://localhost:80/api/v1/getAnImageLocally?path=${req.query.path}`,
+          { responseType: "arraybuffer" }
+        )
+      ).data,
+      "utf-8"
+    )
+  ).toBuffer();
+
+  let t1 = performance.now();
+  // console.log(
+  //   "Time (ms) to fetch an Image by an API from another API = ",
+  //   t1 - t0
+  // );
+  res.end(Buffer.from(out, "base64"));
+}
