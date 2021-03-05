@@ -73,24 +73,28 @@ export async function overlayImages(req, res) {
 
   let mainImg = await sharp("./" + mainUrl);
   let logoImg = await sharp("./" + logoUrl)
-    .resize(400, 200)
+    .resize({ width: 300 })
     .toBuffer();
   let sneakerImg = await sharp("./" + sneakerUrl)
-    .resize(400, 200)
+    .resize({ width: 400 })
     .toBuffer();
   let designImg = "./images/design-resized.png";
-  if (designUrl) {
-    if (fs.existsSync(`./${designUrl}`)) {
-      designImg = await sharp("./" + designUrl)
-        .resize(400, 600)
-        .toBuffer();
-    } else {
-      designImg = Buffer.from(
-        (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
-        "utf-8"
-      );
-    }
-  }
+  // if (designUrl) {
+  //   if (fs.existsSync(`./${designUrl}`)) {
+  //     designImg = await sharp("./" + designUrl)
+  //       .resize(400, 600)
+  //       .toBuffer();
+  //   } else {
+  //     designImg = Buffer.from(
+  //       (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
+  //       "utf-8"
+  //     );
+  //   }
+  // }
+  req.query.designImgWidth = 400;
+  req.query.file = req.query.designUrl;
+  req.query.data = req.query.designData;
+  designImg = await generateDesignImage(req, res);
 
   // get dimensions
   let metadata = {};
@@ -102,7 +106,7 @@ export async function overlayImages(req, res) {
   // get output image
   let currentData = Date.now();
   let outputImg = await sharp("./" + mainUrl)
-    // .resize(1200, 1500)
+    // .resize({ width: 400 })
     .composite([
       {
         input: logoImg,
