@@ -7,6 +7,8 @@ import { performance } from "perf_hooks";
 import yargs from "yargs";
 import fs from "fs";
 import sizeOf from "image-size";
+import processImage from "../server/codec/index.js";
+
 let { options } = yargs;
 
 export function resizeImages(req, res) {
@@ -139,6 +141,15 @@ export async function overlayImages(req, res) {
   // res.end(Buffer.from(outputImg, "base64"));
 }
 
+/**
+ * Convert SVG to PNG
+ */
+
+export async function convertSvgToPng(req, res) {
+  let out = await generateDesignImage(req, res);
+  res.end(Buffer.from(out, "base64"));
+}
+
 function getImgFromSymlink(path) {
   let outImg = Buffer.from("./" + path);
 
@@ -199,4 +210,40 @@ export async function getAnImageFromApi(req, res) {
   //   t1 - t0
   // );
   res.end(Buffer.from(out, "base64"));
+}
+
+async function generateDesignImage(req, res) {
+  //
+  const { data, file } = req.query;
+  if (!file) {
+    res.status(500).send("File not provided");
+    return null;
+  }
+  //parse data
+  const decodedData = data ? JSON.parse(data) : [];
+
+  //process to edit and get the image file
+  const pngBinaryResponse = await processImage(file, decodedData).catch(
+    (err) => {
+      //should be able to debug here too; process itself error should be shown here
+      console.log("----> processImageError: ", err, "<-------");
+      return null;
+    }
+  );
+  if (!pngBinaryResponse) {
+    res.send({
+      error: "Error",
+    });
+    return null;
+  }
+  let strBase64 = Buffer.from(pngBinaryResponse);
+  let out = await sharp(strBase64)
+    .png()
+    .resize({
+      width: req.query.designImgWidth ? req.query.designImgWidth : 275,
+    })
+    .sharpen()
+    .toBuffer();
+
+  return out;
 }
