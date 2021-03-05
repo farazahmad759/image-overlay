@@ -76,12 +76,19 @@ export async function overlayImages(req, res) {
   let sneakerImg = await sharp("./" + sneakerUrl)
     .resize(400, 200)
     .toBuffer();
-  let designImg = designUrl
-    ? Buffer.from(
+  let designImg = "./images/design-resized.png";
+  if (designUrl) {
+    if (fs.existsSync(`./${designUrl}`)) {
+      designImg = await sharp("./" + designUrl)
+        .resize(400, 600)
+        .toBuffer();
+    } else {
+      designImg = Buffer.from(
         (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
         "utf-8"
-      )
-    : "./images/design-resized.png";
+      );
+    }
+  }
 
   // get dimensions
   let metadata = {};

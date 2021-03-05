@@ -10,10 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dev-win": "nodemon --exec babel-node src/bin/www"
   },
-  "keywords": [
-    "node",
-    "express"
-  ],
+  "keywords": ["node", "express"],
   "dependencies": {
     "@babel/runtime": "^7.11.2",
     "@svgdotjs/svg.js": "^3.0.16",

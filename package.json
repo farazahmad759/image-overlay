@@ -6,6 +6,7 @@
   "main": "bin/www.js",
   "scripts": {
     "start": "node -r dotenv/config dist/bin/www",
+    "start-from-src": "node -r dotenv/config src/bin/www",
     "start:dev": "DEBUG=http,convert nodemon --exec babel-node -r dotenv/config src/bin/www",
     "babel": "./node_modules/.bin/babel src -d dist",
     "test": "echo \"Error: no test specified\" && exit 1",
