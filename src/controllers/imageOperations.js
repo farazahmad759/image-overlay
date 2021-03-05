@@ -73,7 +73,7 @@ export async function overlayImages(req, res) {
 
   let mainImg = await sharp("./" + mainUrl);
   let logoImg = await sharp("./" + logoUrl)
-    .resize({ width: 300 })
+    .resize({ width: 190 })
     .toBuffer();
   let sneakerImg = await sharp("./" + sneakerUrl)
     .resize({ width: 400 })
