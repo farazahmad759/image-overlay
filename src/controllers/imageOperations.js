@@ -105,6 +105,9 @@ export async function overlayImages(req, res) {
   // console.log(metadata);
   // get output image
   let currentData = Date.now();
+  if (!designImg) {
+    return null;
+  }
   let outputImg = await sharp("./" + mainUrl)
     // .resize({ width: 400 })
     .composite([
@@ -220,12 +223,18 @@ async function generateDesignImage(req, res) {
   //
   const { data, file } = req.query;
   if (!file) {
-    res.status(500).send("File not provided");
+    res.send("File not provided");
     return null;
   }
   //parse data
-  const decodedData = data ? JSON.parse(data) : [];
-
+  let decodedData = [];
+  try {
+    decodedData = data ? JSON.parse(data) : [];
+  } catch (e) {
+    res.send("Invalid svg data");
+    return null;
+    // handle error
+  }
   //process to edit and get the image file
   const pngBinaryResponse = await processImage(file, decodedData).catch(
     (err) => {
@@ -236,7 +245,7 @@ async function generateDesignImage(req, res) {
   );
   if (!pngBinaryResponse) {
     res.send({
-      error: "Error",
+      error: "Invalid binaryResponse",
     });
     return null;
   }
