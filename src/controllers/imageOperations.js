@@ -52,6 +52,9 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  const scalingFactor = req.query.scalingFactor
+    ? parseFloat(req.query.scalingFactor)
+    : 1;
   var t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
   if (!mainUrl || !logoUrl || !sneakerUrl) {
@@ -70,13 +73,22 @@ export async function overlayImages(req, res) {
     });
     return null;
   }
+  let metadata = {};
 
   let mainImg = await sharp("./" + mainUrl);
+  metadata.mainImg = await mainImg.metadata();
+  mainImg = await sharp("./" + mainUrl)
+    .resize({
+      width: parseInt(metadata.mainImg.width * scalingFactor),
+    })
+    .toBuffer();
+
+  //
   let logoImg = await sharp("./" + logoUrl)
-    .resize({ width: 190 })
+    .resize({ width: parseInt(190 * scalingFactor) })
     .toBuffer();
   let sneakerImg = await sharp("./" + sneakerUrl)
-    .resize({ width: 400 })
+    .resize({ width: parseInt(400 * scalingFactor) })
     .toBuffer();
   let designImg = "./images/design-resized.png";
   // if (designUrl) {
@@ -91,14 +103,13 @@ export async function overlayImages(req, res) {
   //     );
   //   }
   // }
-  req.query.designImgWidth = 400;
+  req.query.designImgWidth = parseInt(400 * scalingFactor);
   req.query.file = req.query.designUrl;
   req.query.data = req.query.designData;
   designImg = await generateDesignImage(req, res);
 
   // get dimensions
-  let metadata = {};
-  metadata.mainImg = await mainImg.metadata();
+  metadata.mainImg = sizeOf(mainImg);
   metadata.logoImg = sizeOf(logoImg);
   metadata.sneakerImg = sizeOf(sneakerImg);
 
@@ -109,7 +120,7 @@ export async function overlayImages(req, res) {
     return null;
   }
   let outputImg = await sharp("./" + mainUrl)
-    // .resize({ width: 400 })
+    .resize({ width: metadata.mainImg.width })
     .composite([
       {
         input: logoImg,
