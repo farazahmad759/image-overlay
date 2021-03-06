@@ -121,22 +121,26 @@ const converterRoutes = (app) => {
             //---delete the files after it is sent
             //delete the svg file
 
-            fs.unlinkSync(`./downloads/${tempSVGFileName}`, (err) => {
-              if (err) {
-                console.log("couldnt delete the file", err);
-              } else {
-                console.log("file was deleted successfully");
-              }
-            });
+            if (fs.existsSync(`./downloads/${tempSVGFileName}`)) {
+              fs.unlinkSync(`./downloads/${tempSVGFileName}`, (err) => {
+                if (err) {
+                  console.log("couldnt delete the file", err);
+                } else {
+                  console.log("file was deleted successfully");
+                }
+              });
+            }
 
             //delete the png file
-            fs.unlinkSync(`./downloads/${tempPngFileName}`, (err) => {
-              if (err) {
-                console.log("couldnt delete the file", err);
-              } else {
-                console.log("file was deleted successfully");
-              }
-            });
+            if (fs.existsSync(`./downloads/${tempPngFileName}`)) {
+              fs.unlinkSync(`./downloads/${tempPngFileName}`, (err) => {
+                if (err) {
+                  console.log("couldnt delete the file", err);
+                } else {
+                  console.log("file was deleted successfully");
+                }
+              });
+            }
             if (fs.existsSync(`./downloads/${__file}`)) {
               fs.unlinkSync(`./downloads/${__file}`, (err) => {
                 if (err) {
