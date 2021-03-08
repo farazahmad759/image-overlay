@@ -88,9 +88,7 @@ export async function overlayImages(req, res) {
   metadata.mainImg = sizeOf(mainImg);
 
   // logo
-  let logoImg = await sharp("./" + logoUrl);
-  metadata.logoImg = await logoImg.metadata();
-  logoImg = await sharp("./" + logoUrl)
+  let logoImg = await sharp("./" + logoUrl)
     .resize({
       width: parseInt(192 * scalingFactor),
     })
@@ -105,7 +103,15 @@ export async function overlayImages(req, res) {
 
   // design
   let designImg = "./images/design-resized.png";
-  req.query.designImgWidth = parseInt(400 * scalingFactor);
+  if (req.query.productType === "t-shirt") {
+    req.query.designImgWidth = parseInt(
+      (req.query.mkStandardWidth - 100) * 0.5 * scalingFactor
+    );
+  } else {
+    req.query.designImgWidth = parseInt(
+      (req.query.mkStandardWidth - 220) * 0.5 * scalingFactor
+    );
+  }
   req.query.file = req.query.designUrl;
   req.query.data = req.query.designData;
   designImg = await generateDesignImage(req, res);
@@ -116,25 +122,29 @@ export async function overlayImages(req, res) {
   if (!designImg) {
     return null;
   }
+
+  let arrCompositeImages = [
+    {
+      input: logoImg,
+      gravity: "southeast",
+      top: 0,
+      left: metadata.mainImg.width - metadata.logoImg.width,
+    },
+    {
+      input: designImg,
+    },
+  ];
+  if (!req.query.hideSneaker) {
+    arrCompositeImages.push({
+      input: sneakerImg,
+      gravity: "southeast",
+      top: metadata.mainImg.height - metadata.sneakerImg.height,
+      left: 10,
+    });
+  }
   let outputImg = await sharp("./" + mainUrl)
     .resize({ width: metadata.mainImg.width })
-    .composite([
-      {
-        input: logoImg,
-        gravity: "southeast",
-        top: 0,
-        left: metadata.mainImg.width - metadata.logoImg.width,
-      },
-      {
-        input: designImg,
-      },
-      {
-        input: sneakerImg,
-        gravity: "southeast",
-        top: metadata.mainImg.height - metadata.sneakerImg.height,
-        left: 10,
-      },
-    ])
+    .composite([...arrCompositeImages])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
     .toFile(`./images/sharp/output-${currentData}.jpg`, function (err) {
       console.log("error: ", err);
