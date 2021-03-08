@@ -52,6 +52,8 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  let fileName = Buffer.from(JSON.stringify(req.query), "ascii");
+  console.log("=================", fileName);
   req.query.mkStandardWidth = 1008;
   req.query.mkStandardHeight = 1152;
 
@@ -144,16 +146,19 @@ export async function overlayImages(req, res) {
       left: 0,
     });
   }
+
+  let outputFileName = `./images/sharp/output-${currentData}.jpg`;
+  // outputFileName = `./images/sharp/output-${fileName}.jpg`;
   let outputImg = await sharp("./" + mainUrl)
     .resize({ width: metadata.mainImg.width })
     .composite([...arrCompositeImages])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
-    .toFile(`./images/sharp/output-${currentData}.jpg`, function (err) {
+    .toFile(outputFileName, function (err) {
       console.log("error: ", err);
       var t1 = performance.now();
 
-      res.sendFile(`output-${currentData}.jpg`, {
-        root: process.cwd() + "/images/sharp/",
+      res.sendFile(outputFileName, {
+        root: process.cwd() + "/",
       });
     });
 }
