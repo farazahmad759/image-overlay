@@ -115,7 +115,7 @@ export async function overlayImages(req, res) {
   req.query.file = req.query.designUrl;
   req.query.data = req.query.designData;
   designImg = await generateDesignImage(req, res);
-  metadata.mainImg = sizeOf(mainImg);
+  metadata.designImg = sizeOf(designImg);
 
   // get output image
   let currentData = Date.now();
@@ -132,6 +132,8 @@ export async function overlayImages(req, res) {
     },
     {
       input: designImg,
+      top: 250 * scalingFactor,
+      left: parseInt(metadata.mainImg.width - metadata.designImg.width) * 0.5,
     },
   ];
   if (!req.query.hideSneaker) {
