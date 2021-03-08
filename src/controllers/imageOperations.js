@@ -52,9 +52,13 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  req.query.mkStandardWidth = 1008;
+  req.query.mkStandardHeight = 1152;
+
   const scalingFactor = req.query.scalingFactor
     ? parseFloat(req.query.scalingFactor)
     : 1;
+
   var t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
   if (!mainUrl || !logoUrl || !sneakerUrl) {
@@ -75,45 +79,38 @@ export async function overlayImages(req, res) {
   }
   let metadata = {};
 
-  let mainImg = await sharp("./" + mainUrl);
-  metadata.mainImg = await mainImg.metadata();
-  mainImg = await sharp("./" + mainUrl)
+  // main image (t-shirt/hoodie)
+  let mainImg = await sharp("./" + mainUrl)
     .resize({
-      width: parseInt(metadata.mainImg.width * scalingFactor),
+      width: parseInt(req.query.mkStandardWidth * scalingFactor),
     })
     .toBuffer();
+  metadata.mainImg = sizeOf(mainImg);
 
-  //
-  let logoImg = await sharp("./" + logoUrl)
-    .resize({ width: parseInt(190 * scalingFactor) })
+  // logo
+  let logoImg = await sharp("./" + logoUrl);
+  metadata.logoImg = await logoImg.metadata();
+  logoImg = await sharp("./" + logoUrl)
+    .resize({
+      width: parseInt(192 * scalingFactor),
+    })
     .toBuffer();
+  metadata.logoImg = sizeOf(logoImg);
+
+  // sneaker
   let sneakerImg = await sharp("./" + sneakerUrl)
     .resize({ width: parseInt(400 * scalingFactor) })
     .toBuffer();
+  metadata.sneakerImg = sizeOf(sneakerImg);
+
+  // design
   let designImg = "./images/design-resized.png";
-  // if (designUrl) {
-  //   if (fs.existsSync(`./${designUrl}`)) {
-  //     designImg = await sharp("./" + designUrl)
-  //       .resize(400, 600)
-  //       .toBuffer();
-  //   } else {
-  //     designImg = Buffer.from(
-  //       (await axios.get(designUrl, { responseType: "arraybuffer" })).data,
-  //       "utf-8"
-  //     );
-  //   }
-  // }
   req.query.designImgWidth = parseInt(400 * scalingFactor);
   req.query.file = req.query.designUrl;
   req.query.data = req.query.designData;
   designImg = await generateDesignImage(req, res);
-
-  // get dimensions
   metadata.mainImg = sizeOf(mainImg);
-  metadata.logoImg = sizeOf(logoImg);
-  metadata.sneakerImg = sizeOf(sneakerImg);
 
-  // console.log(metadata);
   // get output image
   let currentData = Date.now();
   if (!designImg) {
@@ -139,15 +136,6 @@ export async function overlayImages(req, res) {
       },
     ])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
-    //   .toBuffer();
-    // .then((data) => {
-    //   // sharp(data)
-    //   //   .resize(300, 400)
-    //   //   .toBuffer()
-    //   //   .then((d) => {
-    //   //     res.end(Buffer.from(d, "base64"));
-    //   //   });
-    // });
     .toFile(`./images/sharp/output-${currentData}.jpg`, function (err) {
       console.log("error: ", err);
       var t1 = performance.now();
@@ -156,11 +144,11 @@ export async function overlayImages(req, res) {
         root: process.cwd() + "/images/sharp/",
       });
     });
-  // res.end(Buffer.from(outputImg, "base64"));
 }
 
-/**
+/***************************************
  * Convert SVG to PNG
+ * *************************************
  */
 
 export async function convertSvgToPng(req, res) {
@@ -168,15 +156,53 @@ export async function convertSvgToPng(req, res) {
   res.end(Buffer.from(out, "base64"));
 }
 
-function getImgFromSymlink(path) {
-  let outImg = Buffer.from("./" + path);
+async function generateDesignImage(req, res) {
+  const { data, file } = req.query;
+  if (!file) {
+    res.send("File not provided");
+    return null;
+  }
 
-  // const logoImg = logoUrl ? await sharp(Buffer.from(
-  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
-  //   "utf-8"
-  // )).resize(200,300).toBuffer(): "./images/logo-resized.png";
+  // parse data
+  let decodedData = [];
+  try {
+    decodedData = data ? JSON.parse(data) : [];
+  } catch (e) {
+    res.send("Invalid svg data");
+    return null;
+  }
+
+  //process to edit and get the image file
+  const pngBinaryResponse = await processImage(file, decodedData).catch(
+    (err) => {
+      //should be able to debug here too; process itself error should be shown here
+      console.log("----> processImageError: ", err, "<-------");
+      return null;
+    }
+  );
+  if (!pngBinaryResponse) {
+    res.send({
+      error: "Invalid binaryResponse",
+    });
+    return null;
+  }
+
+  let strBase64 = Buffer.from(pngBinaryResponse);
+  let out = await sharp(strBase64)
+    .png()
+    .resize({
+      width: req.query.designImgWidth ? req.query.designImgWidth : 275,
+    })
+    .sharpen()
+    .toBuffer();
+
+  return out;
 }
 
+/************************************
+ * EXTRAS
+ * **********************************
+ */
 export async function getAnImageLocally(req, res) {
   //
   let t0 = performance.now();
@@ -230,44 +256,11 @@ export async function getAnImageFromApi(req, res) {
   res.end(Buffer.from(out, "base64"));
 }
 
-async function generateDesignImage(req, res) {
-  //
-  const { data, file } = req.query;
-  if (!file) {
-    res.send("File not provided");
-    return null;
-  }
-  //parse data
-  let decodedData = [];
-  try {
-    decodedData = data ? JSON.parse(data) : [];
-  } catch (e) {
-    res.send("Invalid svg data");
-    return null;
-    // handle error
-  }
-  //process to edit and get the image file
-  const pngBinaryResponse = await processImage(file, decodedData).catch(
-    (err) => {
-      //should be able to debug here too; process itself error should be shown here
-      console.log("----> processImageError: ", err, "<-------");
-      return null;
-    }
-  );
-  if (!pngBinaryResponse) {
-    res.send({
-      error: "Invalid binaryResponse",
-    });
-    return null;
-  }
-  let strBase64 = Buffer.from(pngBinaryResponse);
-  let out = await sharp(strBase64)
-    .png()
-    .resize({
-      width: req.query.designImgWidth ? req.query.designImgWidth : 275,
-    })
-    .sharpen()
-    .toBuffer();
+function getImgFromSymlink(path) {
+  let outImg = Buffer.from("./" + path);
 
-  return out;
+  // const logoImg = logoUrl ? await sharp(Buffer.from(
+  //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
+  //   "utf-8"
+  // )).resize(200,300).toBuffer(): "./images/logo-resized.png";
 }
