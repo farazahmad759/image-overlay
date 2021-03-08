@@ -136,12 +136,12 @@ export async function overlayImages(req, res) {
       left: parseInt(metadata.mainImg.width - metadata.designImg.width) * 0.5,
     },
   ];
-  if (!req.query.hideSneaker) {
+  if (req.query.hideSneaker !== "true") {
     arrCompositeImages.push({
       input: sneakerImg,
       gravity: "southeast",
-      top: metadata.mainImg.height - metadata.sneakerImg.height,
-      left: 10,
+      top: metadata.mainImg.height - metadata.sneakerImg.height - 50,
+      left: 0,
     });
   }
   let outputImg = await sharp("./" + mainUrl)
