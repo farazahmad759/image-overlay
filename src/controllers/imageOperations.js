@@ -11,52 +11,15 @@ import processImage from "../server/codec/index.js";
 
 let { options } = yargs;
 
-export function resizeImages(req, res) {
-  let MKStandardWidth = 1008;
-  let MKStandardHeight = 1152;
-  sharp("./images/shirt.png")
-    .resize(MKStandardWidth, MKStandardHeight)
-    .toFile("./images/shirt-resized.png", function (err) {
-      if (err) {
-        console.log("error: ", err);
-      }
-    });
-  sharp("./images/design.png")
-    .resize((MKStandardWidth - 100) * 0.5, (MKStandardHeight - 100) * 0.5)
-    .toFile("./images/design-resized.png", function (err) {
-      if (err) {
-        console.log("error: ", err);
-      }
-    });
-  sharp("./images/logo.png")
-    .resize(300, 100)
-    .toFile("./images/logo-resized.png", function (err) {
-      if (err) {
-        console.log("error: ", err);
-      }
-    });
-  sharp("./images/sneaker.png")
-    .resize(300, 100)
-    .toFile("./images/sneaker-resized.png", function (err) {
-      if (err) {
-        console.log("error: ", err);
-      }
-    });
-
-  res.send({
-    done: "done",
-  });
-}
-
 /**
  * overlayImages
  */
 export async function overlayImages(req, res) {
-  if (req.query.background.toLowerCase() === "grey") {
-    req.query.background = "gray";
-  }
   req.query.productType = req.query.productType.toLowerCase();
   req.query.background = req.query.background.toLowerCase();
+  if (req.query.background === "grey") {
+    req.query.background = "gray";
+  }
   if (!["t-shirt", "hoodie"].includes(req.query.productType)) {
     res.send({ error: "invalid product-type" });
     return null;
@@ -111,13 +74,17 @@ export async function overlayImages(req, res) {
   let metadata = {};
 
   // main image (t-shirt/hoodie)
-  let mainImg = await sharp("./" + mainUrl)
-    .resize({
-      width: parseInt(req.query.mkStandardWidth * scalingFactor),
-      height: parseInt(req.query.mkStandardHeight * scalingFactor),
-    })
-    .toBuffer();
-  metadata.mainImg = sizeOf(mainImg);
+  // let mainImg = await sharp("./" + mainUrl)
+  //   .resize({
+  //     width: parseInt(req.query.mkStandardWidth * scalingFactor),
+  //     height: parseInt(req.query.mkStandardHeight * scalingFactor),
+  //   })
+  //   .toBuffer();
+  // metadata.mainImg = sizeOf(mainImg);
+  metadata.mainImg = {
+    height: req.query.mkStandardHeight * scalingFactor,
+    width: req.query.mkStandardWidth * scalingFactor,
+  };
 
   // logo
   let logoImg = await sharp("./" + logoUrl)
@@ -186,7 +153,10 @@ export async function overlayImages(req, res) {
   let outputFileName = `./images/sharp/output-${currentData}.jpg`;
   // outputFileName = `./images/sharp/output-${fileName}.jpg`;
   let outputImg = await sharp("./" + mainUrl)
-    .resize({ width: metadata.mainImg.width })
+    .resize({
+      width: parseInt(metadata.mainImg.width),
+      height: parseInt(metadata.mainImg.height),
+    })
     .composite([...arrCompositeImages])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
     .toFile(outputFileName, function (err) {
@@ -197,6 +167,43 @@ export async function overlayImages(req, res) {
         root: process.cwd() + "/",
       });
     });
+}
+
+export function resizeImages(req, res) {
+  let MKStandardWidth = 1008;
+  let MKStandardHeight = 1152;
+  sharp("./images/shirt.png")
+    .resize(MKStandardWidth, MKStandardHeight)
+    .toFile("./images/shirt-resized.png", function (err) {
+      if (err) {
+        console.log("error: ", err);
+      }
+    });
+  sharp("./images/design.png")
+    .resize((MKStandardWidth - 100) * 0.5, (MKStandardHeight - 100) * 0.5)
+    .toFile("./images/design-resized.png", function (err) {
+      if (err) {
+        console.log("error: ", err);
+      }
+    });
+  sharp("./images/logo.png")
+    .resize(300, 100)
+    .toFile("./images/logo-resized.png", function (err) {
+      if (err) {
+        console.log("error: ", err);
+      }
+    });
+  sharp("./images/sneaker.png")
+    .resize(300, 100)
+    .toFile("./images/sneaker-resized.png", function (err) {
+      if (err) {
+        console.log("error: ", err);
+      }
+    });
+
+  res.send({
+    done: "done",
+  });
 }
 
 /***************************************
