@@ -85,6 +85,7 @@ export async function overlayImages(req, res) {
   let mainImg = await sharp("./" + mainUrl)
     .resize({
       width: parseInt(req.query.mkStandardWidth * scalingFactor),
+      height: parseInt(req.query.mkStandardHeight * scalingFactor),
     })
     .toBuffer();
   metadata.mainImg = sizeOf(mainImg);
@@ -130,19 +131,19 @@ export async function overlayImages(req, res) {
       input: logoImg,
       gravity: "southeast",
       top: 0,
-      left: metadata.mainImg.width - metadata.logoImg.width,
+      left: parseInt(metadata.mainImg.width - metadata.logoImg.width),
     },
     {
       input: designImg,
       top: 250 * scalingFactor,
-      left: parseInt(metadata.mainImg.width - metadata.designImg.width) * 0.5,
+      left: parseInt((metadata.mainImg.width - metadata.designImg.width) * 0.5),
     },
   ];
   if (req.query.hideSneaker !== "true") {
     arrCompositeImages.push({
       input: sneakerImg,
       gravity: "southeast",
-      top: metadata.mainImg.height - metadata.sneakerImg.height - 50,
+      top: parseInt(metadata.mainImg.height - metadata.sneakerImg.height - 50),
       left: 0,
     });
   }
