@@ -52,8 +52,23 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  let mainUrls = {
+    "t-shirt": {
+      white: "assets/2020/07/MK-WhiteTshirt-MockUp-Blank-1.png",
+      black: "assets/2020/11/MK-BlackTshirt-MockUp-Blank.png",
+      gray: "assets/2020/11/MK-GreyTshirt-MockUp-Blank.png",
+    },
+    hoodie: {
+      white: "assets/2021/01/MK-White-Hoodie-Mock.png",
+      black: "assets/2021/01/MK-Black-Hoodie-Mock.png",
+      gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
+    },
+  };
+  if (req.query.background === "grey") {
+    req.query.background = "gray";
+  }
+  req.query.mainUrl = mainUrls[req.query.productType][req.query.background];
   let fileName = Buffer.from(JSON.stringify(req.query), "ascii");
-  console.log("=================", fileName);
   req.query.mkStandardWidth = 1008;
   req.query.mkStandardHeight = 1152;
 
@@ -148,8 +163,8 @@ export async function overlayImages(req, res) {
       gravity: "southeast",
       top:
         req.query.productType === "t-shirt"
-          ? parseInt(metadata.mainImg.height - 100)
-          : parseInt(metadata.mainImg.height - 50),
+          ? parseInt(metadata.mainImg.height - 280 * scalingFactor)
+          : parseInt(metadata.mainImg.height - 50 * scalingFactor),
       left: 0,
     });
   }
