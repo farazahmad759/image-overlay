@@ -144,7 +144,7 @@ export async function overlayImages(req, res) {
       gravity: "southeast",
       top:
         req.query.productType === "t-shirt"
-          ? parseInt(metadata.mainImg.height - 280 * scalingFactor)
+          ? parseInt(metadata.mainImg.height - 260 * scalingFactor)
           : parseInt(metadata.mainImg.height - 50 * scalingFactor),
       left: 0,
     });
