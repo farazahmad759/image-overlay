@@ -100,7 +100,10 @@ export async function overlayImages(req, res) {
 
   // sneaker
   let sneakerImg = await sharp("./" + sneakerUrl)
-    .resize({ width: parseInt(400 * scalingFactor) })
+    .resize(
+      parseInt(300 * 1.5 * scalingFactor),
+      parseInt(200 * 1.5 * scalingFactor)
+    )
     .toBuffer();
   metadata.sneakerImg = sizeOf(sneakerImg);
 
@@ -143,7 +146,7 @@ export async function overlayImages(req, res) {
     arrCompositeImages.push({
       input: sneakerImg,
       gravity: "southeast",
-      top: parseInt(metadata.mainImg.height - metadata.sneakerImg.height - 50),
+      top: parseInt(metadata.mainImg.height),
       left: 0,
     });
   }
