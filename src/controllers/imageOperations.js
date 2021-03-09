@@ -52,6 +52,19 @@ export function resizeImages(req, res) {
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  if (req.query.background.toLowerCase() === "grey") {
+    req.query.background = "gray";
+  }
+  req.query.productType = req.query.productType.toLowerCase();
+  req.query.background = req.query.background.toLowerCase();
+  if (!["t-shirt", "hoodie"].includes(req.query.productType)) {
+    res.send({ error: "invalid product-type" });
+    return null;
+  }
+  if (!["white", "black", "gray"].includes(req.query.background)) {
+    res.send({ error: "invalid background color" });
+    return null;
+  }
   let mainUrls = {
     "t-shirt": {
       white: "assets/2020/07/MK-WhiteTshirt-MockUp-Blank-1.png",
@@ -64,10 +77,11 @@ export async function overlayImages(req, res) {
       gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
     },
   };
-  if (req.query.background === "grey") {
-    req.query.background = "gray";
-  }
   req.query.mainUrl = mainUrls[req.query.productType][req.query.background];
+
+  if (!req.query.logoUrl) {
+    req.query.logoUrl = "assets/2020/12/MK_logo.png";
+  }
   let fileName = Buffer.from(JSON.stringify(req.query), "ascii");
   req.query.mkStandardWidth = 1008;
   req.query.mkStandardHeight = 1152;
@@ -153,7 +167,7 @@ export async function overlayImages(req, res) {
     },
     {
       input: designImg,
-      top: 250 * scalingFactor,
+      top: parseInt(250 * scalingFactor),
       left: parseInt((metadata.mainImg.width - metadata.designImg.width) * 0.5),
     },
   ];
