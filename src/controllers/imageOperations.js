@@ -53,7 +53,7 @@ export async function overlayImages(req, res) {
     ? parseFloat(req.query.scalingFactor)
     : 1;
 
-  var t0 = performance.now();
+  let t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
   if (!mainUrl || !logoUrl || !sneakerUrl) {
     res.send({
@@ -161,7 +161,7 @@ export async function overlayImages(req, res) {
     .flatten({ background: { r: 255, g: 255, b: 255 } })
     .toFile(outputFileName, function (err) {
       console.log("error: ", err);
-      var t1 = performance.now();
+      let t1 = performance.now();
 
       res.sendFile(outputFileName, {
         root: process.cwd() + "/",

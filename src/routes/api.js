@@ -6,7 +6,7 @@ import {
   getAnImageFromApi,
   convertSvgToPng,
 } from "../controllers/imageOperations.js";
-var router = express.Router();
+let router = express.Router();
 
 router.get("/v1/convertSvgToPng", convertSvgToPng);
 router.get("/v1/resizeImages", resizeImages);

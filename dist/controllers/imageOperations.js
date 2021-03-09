@@ -48,7 +48,7 @@ export function resizeImages(req, res) {
  */
 
 export async function overlayImages(req, res) {
-  var t0 = performance.now();
+  let t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
 
   if (!mainUrl || !logoUrl || !sneakerUrl) {
@@ -140,7 +140,7 @@ export async function overlayImages(req, res) {
     // });
     .toFile(`./images/sharp/output-${currentData}.jpg`, function (err) {
       console.log("error: ", err);
-      var t1 = performance.now();
+      let t1 = performance.now();
       res.sendFile(`output-${currentData}.jpg`, {
         root: process.cwd() + "/images/sharp/",
       });

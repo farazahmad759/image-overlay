@@ -1,6 +1,6 @@
-var Jimp = require("jimp");
+let Jimp = require("jimp");
 const { performance } = require("perf_hooks");
-var t0 = performance.now();
+let t0 = performance.now();
 
 function resizeImages() {
   let MKStandardWidth = 1008;

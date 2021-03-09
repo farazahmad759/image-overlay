@@ -1,6 +1,6 @@
-var Jimp = require("jimp");
+let Jimp = require("jimp");
 const { performance } = require("perf_hooks");
-var t0 = performance.now();
+let t0 = performance.now();
 
 async function overlayImages() {
   let MKStandardWidth = 1008;
@@ -23,7 +23,7 @@ async function overlayImages() {
     .composite(sneaker, 0, shirt.getHeight() - sneaker.getHeight())
     .composite(logo, shirt.getWidth() - logo.getWidth(), 0)
     .write("./images/jimp/output.jpg");
-  var t1 = performance.now();
+  let t1 = performance.now();
   console.log("Composite image created in " + (t1 - t0) + " milliseconds.");
 }
 exports.overlayImages = overlayImages;

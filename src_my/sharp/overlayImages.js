@@ -6,7 +6,7 @@ const sharp = require("sharp");
 const { performance } = require("perf_hooks");
 const { background } = require("jimp");
 const { options } = require("yargs");
-var t0 = performance.now();
+let t0 = performance.now();
 
 async function overlayImages() {
   const response = await axios.get(url, { responseType: "arraybuffer" });
@@ -33,7 +33,7 @@ async function overlayImages() {
     .flatten({ background: { r: 255, g: 255, b: 255 } })
     .toFile("./images/sharp/output.jpg", function (err) {
       console.log("error: ", err);
-      var t1 = performance.now();
+      let t1 = performance.now();
       console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
     });
 }
