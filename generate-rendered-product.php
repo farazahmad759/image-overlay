@@ -1,7 +1,9 @@
 <?
-echo $productType . 'dffd';
-
 error_reporting(0);
+
+// header('Content-Type: image/jpeg');
+// echo file_get_contents('../../wp-content/uploads/2020/12/MK_logo.png');
+// die;
 
 if ($_GET['s'] && $_GET['d']) {
     include "../../wp-load.php";
@@ -18,7 +20,7 @@ $productType = ($_GET['product'] ? strtolower($_GET['product']): "t-shirt");
 if ($productType == 't-shirt') {
     switch ($backgroundURL) {
         case "white":
-            $backgroundURL = "https://matchkicks.com/wp-content/uploads/2020/07/MK-WhiteTshirt-MockUp-Blank-1.png";
+            $backgroundURL = "https://matchkicks.com/wp-content/uploads/2020/07/MK-WhiteTshirt-MockUp-Blank.png";
             break;
         case "black":
             $backgroundURL = "https://matchkicks.com/wp-content/uploads/2020/11/MK-BlackTshirt-MockUp-Blank.png";
@@ -42,15 +44,20 @@ if ($productType == 't-shirt') {
             break;
     }
 }
-$designURL = $_GET['design'];
+$designURL = str_replace("https://", "http://", $_GET['design']);
 $sneakerURL = $_GET['sneaker'];
 
+$SAVE = md5($sneakerURL . $designURL . $backgroundURL . $productType);
+
+$Existing = file_get_contents('render/' . $SAVE . '.jpg');
+if (empty($Existing) || $_GET['force'] == 'true') {
 $white = imagecreatefromjpeg("../colors/ffffff.jpg");
 $i = 0;
-do {
+ do {
+//$designURL = 'https://matchkicks.com/wp-content/uploads/2020/12/MK_logo.png';
     $design = imagecreatefrompng($designURL);
     $i++;
-} while ($design === false && $i <= 3);
+ } while ($design === false && $i <= 4);
 //$design = imagecreatefrompng($designURL);
 $MKLogo = imagecreatefrompng($MKLogo);
 $sneaker = imagecreatefrompng($sneakerURL);
@@ -89,8 +96,15 @@ if ($_GET['temp']) {
     imagejpeg($out, $tempURL);
     echo "https://matchkicks.com/scripts/" . $tempURL;
 } else {
+    $SAVEURL = "render/" . $SAVE . ".jpg";
+    imagejpeg($out, $SAVEURL);
+    
     header('Content-Type: image/jpeg');
     imagejpeg($out);
+}
+} else { 
+    header('Content-Type: image/jpeg');
+    echo file_get_contents('render/' . $SAVE . '.jpg');
 }
 
 ?>

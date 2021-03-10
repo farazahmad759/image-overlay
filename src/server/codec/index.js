@@ -1,3 +1,4 @@
+"use strict";
 // returns a window with a document and an svg root node
 import { createSVGWindow } from "svgdom";
 //import Debug from "debug";
@@ -27,10 +28,7 @@ async function modifySVG(rootCanvas, id, property, value) {
     //background encoding
     const backgroundImage = "assets/" + value;
     if (!fs.existsSync(backgroundImage, "base64")) {
-      console.log(
-        "ERROR: no such file or directory",
-        backgroundImage
-      );
+      console.log("ERROR: no such file or directory", backgroundImage);
       return null;
     }
     const toBase64 = fs.readFileSync(backgroundImage, "base64");

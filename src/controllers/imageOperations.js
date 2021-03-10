@@ -1,3 +1,4 @@
+"use strict";
 import axios from "axios";
 let url =
   "https://matchkicks.com/wp-content/uploads/2021/01/Sneaker-Mocks-2021-01-20T205048.889-300x300.png";
@@ -8,6 +9,7 @@ import yargs from "yargs";
 import fs from "fs";
 import sizeOf from "image-size";
 import processImage from "../server/codec/index.js";
+import crypto from "crypto";
 
 let { options } = yargs;
 
@@ -15,6 +17,23 @@ let { options } = yargs;
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  let md5sum = crypto.createHash("md5");
+  md5sum.update(
+    req.query.productType +
+      req.query.background +
+      req.query.logoUrl +
+      req.query.designUrl +
+      req.query.designData +
+      req.query.sneakerUrl +
+      req.query.scalingFactor +
+      req.query.mainUrl
+  );
+  let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
+  if (fs.existsSync(outputFileName)) {
+    res.sendFile(outputFileName, { root: process.cwd() + "/" });
+    return null;
+  }
+  console.log("req.query === ", outputFileName);
   req.query.productType = req.query.productType.toLowerCase();
   req.query.background = req.query.background.toLowerCase();
   if (req.query.background === "grey") {
@@ -40,12 +59,13 @@ export async function overlayImages(req, res) {
       gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
     },
   };
-  req.query.mainUrl = mainUrls[req.query.productType][req.query.background];
+  if (!req.query.mainUrl) {
+    req.query.mainUrl = mainUrls[req.query.productType][req.query.background];
+  }
 
   if (!req.query.logoUrl) {
     req.query.logoUrl = "assets/2020/12/MK_logo.png";
   }
-  let fileName = Buffer.from(JSON.stringify(req.query), "ascii");
   req.query.mkStandardWidth = 1008;
   req.query.mkStandardHeight = 1152;
 
@@ -150,9 +170,9 @@ export async function overlayImages(req, res) {
     });
   }
 
-  let outputFileName = `./images/sharp/output-${currentData}.jpg`;
+  // let outputFileName = `./images/sharp/output-${currentData}.jpg`;
   // outputFileName = `./images/sharp/output-${fileName}.jpg`;
-  let outputImg = await sharp("./" + mainUrl)
+  sharp("./" + mainUrl)
     .resize({
       width: parseInt(metadata.mainImg.width),
       height: parseInt(metadata.mainImg.height),
@@ -161,7 +181,7 @@ export async function overlayImages(req, res) {
     .flatten({ background: { r: 255, g: 255, b: 255 } })
     .toFile(outputFileName, function (err) {
       console.log("error: ", err);
-      let t1 = performance.now();
+      // let t1 = performance.now();
 
       res.sendFile(outputFileName, {
         root: process.cwd() + "/",
