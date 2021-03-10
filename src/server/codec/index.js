@@ -28,7 +28,10 @@ async function modifySVG(rootCanvas, id, property, value) {
     //background encoding
     const backgroundImage = "assets/" + value;
     if (!fs.existsSync(backgroundImage, "base64")) {
-      console.log("ERROR: no such file or directory", backgroundImage);
+      console.log(
+        "ERROR: no such file or directory (modifySVG)",
+        backgroundImage
+      );
       return null;
     }
     const toBase64 = fs.readFileSync(backgroundImage, "base64");

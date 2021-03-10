@@ -33,17 +33,29 @@ export async function overlayImages(req, res) {
     res.sendFile(outputFileName, { root: process.cwd() + "/" });
     return null;
   }
+  if (!req.query.productType) {
+    console.error("ERROR: productType is not provided");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (!req.query.background) {
+    console.error("ERROR: background is not provided");
+    sendLogoImage(req, res);
+    return null;
+  }
   req.query.productType = req.query.productType.toLowerCase();
   req.query.background = req.query.background.toLowerCase();
   if (req.query.background === "grey") {
     req.query.background = "gray";
   }
   if (!["t-shirt", "hoodie"].includes(req.query.productType)) {
-    res.send({ error: "invalid product-type" });
+    console.error("ERROR: Invalid Prouct-type");
+    sendLogoImage(req, res);
     return null;
   }
   if (!["white", "black", "gray"].includes(req.query.background)) {
-    res.send({ error: "invalid background color" });
+    console.error("ERROR: Invalid background color");
+    sendLogoImage(req, res);
     return null;
   }
   let mainUrls = {
@@ -75,9 +87,8 @@ export async function overlayImages(req, res) {
   let t0 = performance.now();
   let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
   if (!mainUrl || !logoUrl || !sneakerUrl) {
-    res.send({
-      error: "Please provide all necessary parameters",
-    });
+    console.error("ERROR: Make sure you provide all parameters");
+    sendLogoImage(req, res);
     return null;
   }
   if (
@@ -85,21 +96,12 @@ export async function overlayImages(req, res) {
     !fs.existsSync(`./${logoUrl}`) ||
     !fs.existsSync(`./${sneakerUrl}`)
   ) {
-    res.send({
-      error: "Image does not exist",
-    });
+    console.error("ERROR: Image doesn't exist at specified path");
+    sendLogoImage(req, res);
     return null;
   }
   let metadata = {};
 
-  // main image (t-shirt/hoodie)
-  // let mainImg = await sharp("./" + mainUrl)
-  //   .resize({
-  //     width: parseInt(req.query.mkStandardWidth * scalingFactor),
-  //     height: parseInt(req.query.mkStandardHeight * scalingFactor),
-  //   })
-  //   .toBuffer();
-  // metadata.mainImg = sizeOf(mainImg);
   metadata.mainImg = {
     height: req.query.mkStandardHeight * scalingFactor,
     width: req.query.mkStandardWidth * scalingFactor,
@@ -136,13 +138,17 @@ export async function overlayImages(req, res) {
   req.query.file = req.query.designUrl;
   req.query.data = req.query.designData;
   designImg = await generateDesignImage(req, res);
+  if (!designImg || designImg.error) {
+    console.error(
+      designImg ? designImg.error : "designImg is either null or undefined"
+    );
+    sendLogoImage(req, res);
+    return null;
+  }
   metadata.designImg = sizeOf(designImg);
 
   // get output image
   let currentData = Date.now();
-  if (!designImg) {
-    return null;
-  }
 
   let arrCompositeImages = [
     {
@@ -238,8 +244,9 @@ export async function convertSvgToPng(req, res) {
 async function generateDesignImage(req, res) {
   const { data, file } = req.query;
   if (!file) {
-    res.send("File not provided");
-    return null;
+    return {
+      error: "ERROR: Design File not provided",
+    };
   }
 
   // parse data
@@ -247,23 +254,25 @@ async function generateDesignImage(req, res) {
   try {
     decodedData = data ? JSON.parse(data) : [];
   } catch (e) {
-    res.send("Invalid svg data");
-    return null;
+    return {
+      error: "ERROR: Invalid svg data",
+    };
   }
 
   //process to edit and get the image file
   const pngBinaryResponse = await processImage(file, decodedData).catch(
     (err) => {
       //should be able to debug here too; process itself error should be shown here
-      console.log("----> processImageError: ", err, "<-------");
-      return null;
+      return {
+        error: "ERROR: processImageError",
+        errorInfo: err,
+      };
     }
   );
   if (!pngBinaryResponse) {
-    res.send({
-      error: "Invalid binaryResponse",
-    });
-    return null;
+    return {
+      error: "ERROR: Invalid binaryResponse",
+    };
   }
 
   let strBase64 = Buffer.from(pngBinaryResponse);
@@ -276,6 +285,17 @@ async function generateDesignImage(req, res) {
     .toBuffer();
 
   return out;
+}
+
+/************************************
+ * SEND LOGO IMAGE
+ * **********************************
+ */
+async function sendLogoImage(req, res) {
+  let d = await sharp("./assets/2020/12/MK_logo.png")
+    .resize({ width: 300 })
+    .toBuffer();
+  res.end(Buffer.from(d, "utf-8"));
 }
 
 /************************************
