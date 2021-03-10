@@ -29,11 +29,10 @@ export async function overlayImages(req, res) {
       req.query.mainUrl
   );
   let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
-  if (fs.existsSync(outputFileName)) {
+  if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
     res.sendFile(outputFileName, { root: process.cwd() + "/" });
     return null;
   }
-  console.log("req.query === ", outputFileName);
   req.query.productType = req.query.productType.toLowerCase();
   req.query.background = req.query.background.toLowerCase();
   if (req.query.background === "grey") {
