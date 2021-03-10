@@ -10,6 +10,7 @@ import fs from "fs";
 import sizeOf from "image-size";
 import processImage from "../server/codec/index.js";
 import crypto from "crypto";
+import AWS from "aws-sdk";
 
 let { options } = yargs;
 
@@ -17,6 +18,20 @@ let { options } = yargs;
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  // Configure client for use with Spaces
+  const spacesEndpoint = new AWS.Endpoint("fra1.digitaloceanspaces.com");
+  const s3 = new AWS.S3({
+    endpoint: spacesEndpoint,
+    accessKeyId: "UO5KU74KKSMBR466NXB4",
+    secretAccessKey: "X7StMYOgGvHKKCkrSW9kutjyDuJvOeI5U/QrWFQZkVA",
+  });
+
+  // s3.getObject(params, function (err, data) {
+  //   if (err) console.log(err, err.stack);
+  //   // an error occurred
+  //   else console.log(data); // successful response
+  // });
+
   let md5sum = crypto.createHash("md5");
   md5sum.update(
     req.query.productType +
@@ -28,8 +43,36 @@ export async function overlayImages(req, res) {
       req.query.scalingFactor +
       req.query.mainUrl
   );
-  let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
+  let outputFileName = "images/sharp/output-" + md5sum.digest("hex") + ".jpg";
+
+  let shouldResSend = true;
+  let hahaha = null;
+  try {
+    hahaha = await s3
+      .getObject({
+        Bucket: "matchkicks",
+        Key: outputFileName,
+      })
+      .promise();
+  } catch (err) {}
+  if (hahaha) {
+    // res.end(
+    //   Buffer.from(
+    //     (
+    //       await axios.get(
+    //         `https://matchkicks.fra1.digitaloceanspaces.com/${outputFileName}`
+    //       )
+    //     ).data,
+    //     "utf-8"
+    //   )
+    // );
+    res.send(
+      `https://matchkicks.fra1.digitaloceanspaces.com/${outputFileName}`
+    );
+    return null;
+  }
   if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
+    console.log("thisssssss ==============");
     res.sendFile(outputFileName, { root: process.cwd() + "/" });
     return null;
   }
@@ -171,21 +214,39 @@ export async function overlayImages(req, res) {
 
   // let outputFileName = `./images/sharp/output-${currentData}.jpg`;
   // outputFileName = `./images/sharp/output-${fileName}.jpg`;
-  sharp("./" + mainUrl)
+  let out = await sharp("./" + mainUrl)
     .resize({
       width: parseInt(metadata.mainImg.width),
       height: parseInt(metadata.mainImg.height),
     })
     .composite([...arrCompositeImages])
     .flatten({ background: { r: 255, g: 255, b: 255 } })
-    .toFile(outputFileName, function (err) {
-      console.log("error: ", err);
-      // let t1 = performance.now();
+    .toBuffer();
 
-      res.sendFile(outputFileName, {
-        root: process.cwd() + "/",
-      });
-    });
+  // Add a file to a Space
+  let params = {
+    Body: out,
+    Bucket: "matchkicks",
+    Key: outputFileName,
+    ACL: "public-read-write",
+    ContentType: "image/jpeg",
+    ContentEncoding: "base64",
+    ContentDisposition: "inline",
+  };
+  res.end(Buffer.from(out, "utf-8"));
+  s3.putObject(params, function (err, data) {
+    if (err) console.log(err, err.stack);
+    else console.log(data);
+  });
+
+  // .toFile(outputFileName, function (err) {
+  //   console.log("error: ", err);
+  //   // let t1 = performance.now();
+
+  //   res.sendFile(outputFileName, {
+  //     root: process.cwd() + "/",
+  //   });
+  // });
 }
 
 export function resizeImages(req, res) {
