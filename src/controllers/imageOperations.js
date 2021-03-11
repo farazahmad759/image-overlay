@@ -260,21 +260,20 @@ async function generateDesignImage(req, res) {
   }
 
   //process to edit and get the image file
-  const pngBinaryResponse = await processImage(file, decodedData).catch(
-    (err) => {
-      //should be able to debug here too; process itself error should be shown here
-      return {
-        error: "ERROR: processImageError",
-        errorInfo: err,
-      };
-    }
-  );
+  let pngBinaryResponse = await processImage(file, decodedData).catch((err) => {
+    //should be able to debug here too; process itself error should be shown here
+    return {
+      error: "ERROR: processImageError",
+      errorInfo: err,
+    };
+  });
   if (!pngBinaryResponse) {
     return {
       error: "ERROR: Invalid binaryResponse",
     };
   }
 
+  pngBinaryResponse = pngBinaryResponse.replace("svgjs:data", "svgjs");
   let strBase64 = Buffer.from(pngBinaryResponse);
   let out = await sharp(strBase64)
     .png()
