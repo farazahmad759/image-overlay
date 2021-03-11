@@ -113,6 +113,7 @@ export async function overlayImages(req, res) {
       width: parseInt(192 * scalingFactor),
     })
     .toBuffer();
+  // console.log("type of ====", logoImg.constructor);
   metadata.logoImg = sizeOf(logoImg);
 
   // sneaker
@@ -267,7 +268,7 @@ async function generateDesignImage(req, res) {
       errorInfo: err,
     };
   });
-  if (!pngBinaryResponse) {
+  if (!pngBinaryResponse || typeof pngBinaryResponse !== "string") {
     return {
       error: "ERROR: Invalid binaryResponse",
     };

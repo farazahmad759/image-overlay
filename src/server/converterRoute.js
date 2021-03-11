@@ -33,7 +33,7 @@ const converterRoutes = (app) => {
       }
     );
 
-    if (pngBinaryResponse === null) {
+    if (!pngBinaryResponse || typeof pngBinaryResponse !== "string") {
       //----error response to client
       res
         .status(500)
