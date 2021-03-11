@@ -25,7 +25,7 @@ const converterRoutes = (app) => {
     const __file = file.split("/").pop();
 
     //process to edit and get the image file
-    const pngBinaryResponse = await processImage(file, decodedData).catch(
+    let pngBinaryResponse = await processImage(file, decodedData).catch(
       (err) => {
         //should be able to debug here too; process itself error should be shown here
         console.log("----> processImageError: ", err, "<-------");
@@ -42,6 +42,7 @@ const converterRoutes = (app) => {
         );
     } else {
       //----success response to client
+      pngBinaryResponse = pngBinaryResponse.replace("svgjs:data", "svgjs");
 
       //generate the files
       //generate the SVG
