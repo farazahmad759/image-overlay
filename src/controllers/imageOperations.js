@@ -195,6 +195,22 @@ export async function overlayImages(req, res) {
     });
 }
 
+/****************************************
+ * get4by4Image
+ * @param {*} req
+ * @param {*} res
+ * **************************************
+ */
+
+export async function get4by4Image(req, res) {
+  //
+  req.query.image1 = JSON.parse(req.query.image1);
+  console.log(req.query);
+  res.send({
+    data: "get4by4Image",
+  });
+}
+
 export function resizeImages(req, res) {
   let MKStandardWidth = 1008;
   let MKStandardHeight = 1152;
