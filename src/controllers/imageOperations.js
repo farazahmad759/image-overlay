@@ -88,6 +88,10 @@ export async function overlayImages(req, res) {
     sendLogoImage(req, res);
     return null;
   }
+  if (out.msg) {
+    res.sendFile(out.msg["file-from-path"], { root: process.cwd() + "/" });
+    return null;
+  }
 
   res.end(Buffer.from(out, "utf-8"));
 }
@@ -104,8 +108,11 @@ async function makeOverlayImage(req, res) {
 
   // check if the file already exists for this API
   if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
-    res.sendFile(outputFileName, { root: process.cwd() + "/" });
-    return null;
+    return {
+      msg: {
+        "file-from-path": outputFileName,
+      },
+    };
   }
 
   req.query.mkStandardWidth = 1008;
@@ -152,6 +159,7 @@ async function makeOverlayImage(req, res) {
   }
   req.query.file = req.query.designUrl;
   req.query.data = req.query.designData;
+
   designImg = await generateDesignImage(req, res);
   if (!designImg || designImg.error) {
     return {
@@ -213,6 +221,7 @@ async function makeOverlayImage(req, res) {
       .composite([...arrCompositeImages])
       .flatten({ background: { r: 255, g: 255, b: 255 } })
       .toBuffer();
+
     return out;
   }
 }
@@ -291,10 +300,13 @@ export async function get4by4Image(req, res) {
   };
   console.log(q1.query.designUrl);
   let out = await makeOverlayImage(q1, res);
-
   if (!out || out.error) {
     console.error(out ? out.error : "ERROR: unknown error");
     sendLogoImage(req, res);
+    return null;
+  }
+  if (out.msg) {
+    res.sendFile(out.msg["file-from-path"], { root: process.cwd() + "/" });
     return null;
   }
 
