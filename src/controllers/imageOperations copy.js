@@ -155,9 +155,7 @@ async function makeOverlayImage(req, res) {
   designImg = await generateDesignImage(req, res);
   if (!designImg || designImg.error) {
     return {
-      error: designImg
-        ? designImg.error
-        : "ERROR: designImg is either null or undefined",
+      error: "ERROR: designImg is either null or undefined",
     };
   }
   metadata.designImg = sizeOf(designImg);
@@ -225,10 +223,20 @@ async function makeOverlayImage(req, res) {
  */
 
 export async function get4by4Image(req, res) {
+  if (
+    !req.query.image1 ||
+    !req.query.image2 ||
+    !req.query.image3 ||
+    !req.query.image4
+  ) {
+    console.error("ERROR: Please provide all 4 images");
+    sendLogoImage(req, res);
+    return null;
+  }
   req.query.image1 = JSON.parse(req.query.image1);
-  // req.query.image2 = JSON.parse(req.query.image2);
-  // req.query.image3 = JSON.parse(req.query.image3);
-  // req.query.image4 = JSON.parse(req.query.image4);
+  req.query.image2 = JSON.parse(req.query.image2);
+  req.query.image3 = JSON.parse(req.query.image3);
+  req.query.image4 = JSON.parse(req.query.image4);
   // ---------------------------------------------------------------
   // Validate Data
   // ---------------------------------------------------------------
@@ -286,19 +294,47 @@ export async function get4by4Image(req, res) {
     return null;
   }
 
-  let q1 = {
-    query: req.query.image1,
+  let customQs = {
+    q1: {
+      query: req.query.image1,
+    },
+    q2: {
+      query: req.query.image2,
+    },
+    q3: {
+      query: req.query.image3,
+    },
+    q4: {
+      query: req.query.image4,
+    },
   };
-  console.log(q1.query.designUrl);
-  let out = await makeOverlayImage(q1, res);
+  let out1 = await makeOverlayImage(customQs.q1, res);
+  let out2 = await makeOverlayImage(customQs.q2, res);
+  let out3 = await makeOverlayImage(customQs.q3, res);
+  let out4 = await makeOverlayImage(customQs.q4, res);
 
-  if (!out || out.error) {
-    console.error(out ? out.error : "ERROR: unknown error");
+  if (!out1 || out1.error) {
+    console.error(out1 ? out1.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (!out2 || out2.error) {
+    console.error(out2 ? out2.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (!out3 || out3.error) {
+    console.error(out3 ? out3.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (!out4 || out4.error) {
+    console.error(out4 ? out4.error : "ERROR: unknown error");
     sendLogoImage(req, res);
     return null;
   }
 
-  res.end(Buffer.from(out, "utf-8"));
+  res.end(Buffer.from(out1, "utf-8"));
 }
 
 export function resizeImages(req, res) {
