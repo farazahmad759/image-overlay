@@ -8,6 +8,7 @@ import { performance } from "perf_hooks";
 import yargs from "yargs";
 import fs from "fs";
 import { makeOverlayImage, sendLogoImage } from "./../helpers/index.js";
+import sizeOf from "image-size";
 
 let mainUrls = {
   "t-shirt": {
@@ -257,20 +258,11 @@ export async function get4by4Image(req, res) {
     sendLogoImage(req, res);
     return null;
   }
-  if (out1.msg) {
-    // res.sendFile(out1.msg["get-file-from-path"], { root: process.cwd() + "/" });
-    // return null;
-  } else {
-  }
   // out2
   if (!out2 || out2.error) {
     console.error(out2 ? out2.error : "ERROR: unknown error");
     sendLogoImage(req, res);
     return null;
-  }
-  if (out2.msg) {
-    // res.sendFile(out2.msg["get-file-from-path"], { root: process.cwd() + "/" });
-    // return null;
   }
   // out3
   if (!out3 || out3.error) {
@@ -278,40 +270,35 @@ export async function get4by4Image(req, res) {
     sendLogoImage(req, res);
     return null;
   }
-  if (out3.msg) {
-    // res.sendFile(out3.msg["get-file-from-path"], { root: process.cwd() + "/" });
-    // return null;
-  }
   // out4
   if (!out4 || out4.error) {
     console.error(out4 ? out4.error : "ERROR: unknown error");
     sendLogoImage(req, res);
     return null;
   }
-  if (out4.msg) {
-    // res.sendFile(out4.msg["get-file-from-path"], {
-    //   root: process.cwd() + "/",
-    // });
-    // return null;
-  }
 
+  if (!req.query.scalingFactor) {
+    req.query.scalingFactor = 1;
+  }
   // comp1
 
   let comp1;
   let comp2;
   let comp3;
   let comp4;
+  let compWidth = 192 * req.query.scalingFactor;
+  let compPadding = 8;
   // comp1
   if (out1.msg) {
     comp1 = await sharp("./" + out1.msg["get-file-from-path"])
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   } else {
     comp1 = await sharp(out1)
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   }
@@ -319,13 +306,13 @@ export async function get4by4Image(req, res) {
   if (out2.msg) {
     comp2 = await sharp("./" + out2.msg["get-file-from-path"])
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   } else {
     comp2 = await sharp(out2)
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   }
@@ -333,13 +320,13 @@ export async function get4by4Image(req, res) {
   if (out3.msg) {
     comp3 = await sharp("./" + out3.msg["get-file-from-path"])
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   } else {
     comp3 = await sharp(out3)
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   }
@@ -347,42 +334,51 @@ export async function get4by4Image(req, res) {
   if (out4.msg) {
     comp4 = await sharp("./" + out4.msg["get-file-from-path"])
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   } else {
     comp4 = await sharp(out4)
       .resize({
-        width: parseInt(192),
+        width: parseInt(compWidth),
       })
       .toBuffer();
   }
-  let tempOut = await sharp("./assets/blank.png")
-    .resize({ width: 1000 })
+  let compDimensions = sizeOf(comp4);
+  let compHeight = compDimensions.height;
+  let tempOut = await sharp({
+    create: {
+      width: parseInt(compWidth * 2 + compPadding * 3),
+      height: parseInt(compHeight * 2 + compPadding * 3),
+      channels: 4,
+      background: { r: 255, g: 0, b: 0, alpha: 0.5 },
+    },
+  })
+    .png()
     .composite([
       {
         input: comp1,
         gravity: "southeast",
-        top: 0,
-        left: parseInt(200),
+        top: compPadding,
+        left: parseInt(compPadding),
       },
       {
         input: comp2,
         gravity: "southeast",
-        top: 0,
-        left: parseInt(0),
+        top: compPadding,
+        left: parseInt(compWidth + 2 * compPadding),
       },
       {
         input: comp3,
         gravity: "southeast",
-        top: 300,
-        left: parseInt(0),
+        top: compHeight + 2 * compPadding,
+        left: parseInt(compPadding),
       },
       {
         input: comp4,
         gravity: "southeast",
-        top: 300,
-        left: parseInt(200),
+        top: compHeight + 2 * compPadding,
+        left: parseInt(compWidth + 2 * compPadding),
       },
     ])
     .toBuffer();
