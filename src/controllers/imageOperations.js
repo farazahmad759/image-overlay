@@ -319,8 +319,8 @@ export async function get4by4Image(req, res) {
     return null;
   }
   if (out1.msg) {
-    res.sendFile(out1.msg["get-file-from-path"], { root: process.cwd() + "/" });
-    return null;
+    // res.sendFile(out1.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    // return null;
   }
   // out2
   if (!out2 || out2.error) {
@@ -329,8 +329,8 @@ export async function get4by4Image(req, res) {
     return null;
   }
   if (out2.msg) {
-    res.sendFile(out2.msg["get-file-from-path"], { root: process.cwd() + "/" });
-    return null;
+    // res.sendFile(out2.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    // return null;
   }
   // out3
   if (!out3 || out3.error) {
@@ -339,8 +339,8 @@ export async function get4by4Image(req, res) {
     return null;
   }
   if (out3.msg) {
-    res.sendFile(out3.msg["get-file-from-path"], { root: process.cwd() + "/" });
-    return null;
+    // res.sendFile(out3.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    // return null;
   }
   // out4
   if (!out4 || out4.error) {
@@ -349,13 +349,65 @@ export async function get4by4Image(req, res) {
     return null;
   }
   if (out4.msg) {
-    res.sendFile(out4.msg["get-file-from-path"], {
-      root: process.cwd() + "/",
-    });
-    return null;
+    // res.sendFile(out4.msg["get-file-from-path"], {
+    //   root: process.cwd() + "/",
+    // });
+    // return null;
   }
 
-  res.end(Buffer.from(out1, "utf-8"));
+  // comp1
+  let comp1 = await sharp("./" + out1.msg["get-file-from-path"])
+    .resize({
+      width: parseInt(192),
+    })
+    .toBuffer();
+  let comp2 = await sharp("./" + out2.msg["get-file-from-path"])
+    .resize({
+      width: parseInt(192),
+    })
+    .toBuffer();
+  let comp3 = await sharp("./" + out3.msg["get-file-from-path"])
+    .resize({
+      width: parseInt(192),
+    })
+    .toBuffer();
+  let comp4 = await sharp("./" + out4.msg["get-file-from-path"])
+    .resize({
+      width: parseInt(192),
+    })
+    .toBuffer();
+
+  let tempOut = await sharp("./assets/blank.png")
+    .resize({ width: 1000 })
+    .composite([
+      {
+        input: comp1,
+        gravity: "southeast",
+        top: 0,
+        left: parseInt(200),
+      },
+      {
+        input: comp2,
+        gravity: "southeast",
+        top: 0,
+        left: parseInt(0),
+      },
+      {
+        input: comp3,
+        gravity: "southeast",
+        top: 300,
+        left: parseInt(0),
+      },
+      {
+        input: comp4,
+        gravity: "southeast",
+        top: 300,
+        left: parseInt(200),
+      },
+    ])
+    .toBuffer();
+
+  res.end(Buffer.from(tempOut, "utf-8"));
 }
 
 export function resizeImages(req, res) {
