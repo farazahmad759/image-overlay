@@ -321,6 +321,7 @@ export async function get4by4Image(req, res) {
   if (out1.msg) {
     // res.sendFile(out1.msg["get-file-from-path"], { root: process.cwd() + "/" });
     // return null;
+  } else {
   }
   // out2
   if (!out2 || out2.error) {
@@ -356,27 +357,67 @@ export async function get4by4Image(req, res) {
   }
 
   // comp1
-  let comp1 = await sharp("./" + out1.msg["get-file-from-path"])
-    .resize({
-      width: parseInt(192),
-    })
-    .toBuffer();
-  let comp2 = await sharp("./" + out2.msg["get-file-from-path"])
-    .resize({
-      width: parseInt(192),
-    })
-    .toBuffer();
-  let comp3 = await sharp("./" + out3.msg["get-file-from-path"])
-    .resize({
-      width: parseInt(192),
-    })
-    .toBuffer();
-  let comp4 = await sharp("./" + out4.msg["get-file-from-path"])
-    .resize({
-      width: parseInt(192),
-    })
-    .toBuffer();
 
+  let comp1;
+  let comp2;
+  let comp3;
+  let comp4;
+  // comp1
+  if (out1.msg) {
+    comp1 = await sharp("./" + out1.msg["get-file-from-path"])
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  } else {
+    comp1 = await sharp(out1)
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  }
+  // comp2
+  if (out2.msg) {
+    comp2 = await sharp("./" + out2.msg["get-file-from-path"])
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  } else {
+    comp2 = await sharp(out2)
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  }
+  // comp3
+  if (out3.msg) {
+    comp3 = await sharp("./" + out3.msg["get-file-from-path"])
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  } else {
+    comp3 = await sharp(out3)
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  }
+  // comp4
+  if (out4.msg) {
+    comp4 = await sharp("./" + out4.msg["get-file-from-path"])
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  } else {
+    comp4 = await sharp(out4)
+      .resize({
+        width: parseInt(192),
+      })
+      .toBuffer();
+  }
   let tempOut = await sharp("./assets/blank.png")
     .resize({ width: 1000 })
     .composite([
@@ -467,6 +508,7 @@ async function generateDesignImage(req, res) {
 
   // parse data
   let decodedData = [];
+  console.log(" ================svg data = ", data);
   try {
     decodedData = data ? JSON.parse(data) : [];
   } catch (e) {
