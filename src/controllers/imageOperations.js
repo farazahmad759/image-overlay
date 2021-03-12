@@ -89,7 +89,7 @@ export async function overlayImages(req, res) {
     return null;
   }
   if (out.msg) {
-    res.sendFile(out.msg["file-from-path"], { root: process.cwd() + "/" });
+    res.sendFile(out.msg["get-file-from-path"], { root: process.cwd() + "/" });
     return null;
   }
 
@@ -110,7 +110,7 @@ async function makeOverlayImage(req, res) {
   if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
     return {
       msg: {
-        "file-from-path": outputFileName,
+        "get-file-from-path": outputFileName,
       },
     };
   }
@@ -235,9 +235,9 @@ async function makeOverlayImage(req, res) {
 
 export async function get4by4Image(req, res) {
   req.query.image1 = JSON.parse(req.query.image1);
-  // req.query.image2 = JSON.parse(req.query.image2);
-  // req.query.image3 = JSON.parse(req.query.image3);
-  // req.query.image4 = JSON.parse(req.query.image4);
+  req.query.image2 = JSON.parse(req.query.image2);
+  req.query.image3 = JSON.parse(req.query.image3);
+  req.query.image4 = JSON.parse(req.query.image4);
   // ---------------------------------------------------------------
   // Validate Data
   // ---------------------------------------------------------------
@@ -295,22 +295,67 @@ export async function get4by4Image(req, res) {
     return null;
   }
 
-  let q1 = {
-    query: req.query.image1,
+  let customQs = {
+    q1: {
+      query: req.query.image1,
+    },
+    q2: {
+      query: req.query.image2,
+    },
+    q3: {
+      query: req.query.image3,
+    },
+    q4: {
+      query: req.query.image4,
+    },
   };
-  console.log(q1.query.designUrl);
-  let out = await makeOverlayImage(q1, res);
-  if (!out || out.error) {
-    console.error(out ? out.error : "ERROR: unknown error");
+  let out1 = await makeOverlayImage(customQs.q1, res);
+  let out2 = await makeOverlayImage(customQs.q2, res);
+  let out3 = await makeOverlayImage(customQs.q3, res);
+  let out4 = await makeOverlayImage(customQs.q4, res);
+  if (!out1 || out1.error) {
+    console.error(out1 ? out1.error : "ERROR: unknown error");
     sendLogoImage(req, res);
     return null;
   }
-  if (out.msg) {
-    res.sendFile(out.msg["file-from-path"], { root: process.cwd() + "/" });
+  if (out1.msg) {
+    res.sendFile(out1.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    return null;
+  }
+  // out2
+  if (!out2 || out2.error) {
+    console.error(out2 ? out2.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (out2.msg) {
+    res.sendFile(out2.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    return null;
+  }
+  // out3
+  if (!out3 || out3.error) {
+    console.error(out3 ? out3.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (out3.msg) {
+    res.sendFile(out3.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    return null;
+  }
+  // out4
+  if (!out4 || out4.error) {
+    console.error(out4 ? out4.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (out4.msg) {
+    res.sendFile(out4.msg["get-file-from-path"], {
+      root: process.cwd() + "/",
+    });
     return null;
   }
 
-  res.end(Buffer.from(out, "utf-8"));
+  res.end(Buffer.from(out1, "utf-8"));
 }
 
 export function resizeImages(req, res) {
