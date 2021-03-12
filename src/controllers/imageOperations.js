@@ -108,45 +108,108 @@ export async function get4by4Image(req, res) {
   // ---------------------------------------------------------------
   // Validate Data
   // ---------------------------------------------------------------
-  if (!req.query.image1.productType) {
+  if (
+    !req.query.image1.productType ||
+    !req.query.image2.productType ||
+    !req.query.image3.productType ||
+    !req.query.image4.productType
+  ) {
     console.error("ERROR: productType is not provided");
     sendLogoImage(req, res);
     return null;
   }
-  if (!req.query.image1.background) {
+  if (
+    !req.query.image1.background ||
+    !req.query.image2.background ||
+    !req.query.image3.background ||
+    !req.query.image4.background
+  ) {
     console.error("ERROR: background is not provided");
     sendLogoImage(req, res);
     return null;
   }
   req.query.image1.productType = req.query.image1.productType.toLowerCase();
+  req.query.image2.productType = req.query.image2.productType.toLowerCase();
+  req.query.image3.productType = req.query.image3.productType.toLowerCase();
+  req.query.image4.productType = req.query.image4.productType.toLowerCase();
   req.query.image1.background = req.query.image1.background.toLowerCase();
+  req.query.image2.background = req.query.image2.background.toLowerCase();
+  req.query.image3.background = req.query.image3.background.toLowerCase();
+  req.query.image4.background = req.query.image4.background.toLowerCase();
   if (req.query.image1.background === "grey") {
     req.query.image1.background = "gray";
   }
-  if (!["t-shirt", "hoodie"].includes(req.query.image1.productType)) {
+  if (req.query.image2.background === "grey") {
+    req.query.image2.background = "gray";
+  }
+  if (req.query.image3.background === "grey") {
+    req.query.image3.background = "gray";
+  }
+  if (req.query.image4.background === "grey") {
+    req.query.image4.background = "gray";
+  }
+  if (
+    !["t-shirt", "hoodie"].includes(req.query.image1.productType) ||
+    !["t-shirt", "hoodie"].includes(req.query.image2.productType) ||
+    !["t-shirt", "hoodie"].includes(req.query.image3.productType) ||
+    !["t-shirt", "hoodie"].includes(req.query.image4.productType)
+  ) {
     console.error("ERROR: Invalid Prouct-type");
     sendLogoImage(req, res);
     return null;
   }
-  if (!["white", "black", "gray"].includes(req.query.image1.background)) {
+  if (
+    !["white", "black", "gray"].includes(req.query.image1.background) ||
+    !["white", "black", "gray"].includes(req.query.image2.background) ||
+    !["white", "black", "gray"].includes(req.query.image3.background) ||
+    !["white", "black", "gray"].includes(req.query.image4.background)
+  ) {
     console.error("ERROR: Invalid background color");
     sendLogoImage(req, res);
     return null;
   }
 
-  if (!req.query.image1.mainUrl) {
+  if (
+    !req.query.image1.mainUrl ||
+    !req.query.image2.mainUrl ||
+    !req.query.image3.mainUrl ||
+    !req.query.image4.mainUrl
+  ) {
     req.query.image1.mainUrl =
       mainUrls[req.query.image1.productType][req.query.image1.background];
+    req.query.image2.mainUrl =
+      mainUrls[req.query.image2.productType][req.query.image2.background];
+    req.query.image3.mainUrl =
+      mainUrls[req.query.image3.productType][req.query.image3.background];
+    req.query.image4.mainUrl =
+      mainUrls[req.query.image4.productType][req.query.image4.background];
   }
 
-  if (!req.query.image1.logoUrl) {
+  if (
+    !req.query.image1.logoUrl ||
+    !req.query.image2.logoUrl ||
+    !req.query.image3.logoUrl ||
+    !req.query.image4.logoUrl
+  ) {
     req.query.image1.logoUrl = "assets/2020/12/MK_logo.png";
+    req.query.image2.logoUrl = "assets/2020/12/MK_logo.png";
+    req.query.image3.logoUrl = "assets/2020/12/MK_logo.png";
+    req.query.image4.logoUrl = "assets/2020/12/MK_logo.png";
   }
 
   if (
     !req.query.image1.mainUrl ||
     !req.query.image1.logoUrl ||
-    !req.query.image1.sneakerUrl
+    !req.query.image1.sneakerUrl ||
+    !req.query.image2.mainUrl ||
+    !req.query.image2.logoUrl ||
+    !req.query.image2.sneakerUrl ||
+    !req.query.image3.mainUrl ||
+    !req.query.image3.logoUrl ||
+    !req.query.image3.sneakerUrl ||
+    !req.query.image4.mainUrl ||
+    !req.query.image4.logoUrl ||
+    !req.query.image4.sneakerUrl
   ) {
     console.error("ERROR: Make sure you provide all parameters");
     sendLogoImage(req, res);
@@ -155,7 +218,16 @@ export async function get4by4Image(req, res) {
   if (
     !fs.existsSync(`./${req.query.image1.mainUrl}`) ||
     !fs.existsSync(`./${req.query.image1.logoUrl}`) ||
-    !fs.existsSync(`./${req.query.image1.sneakerUrl}`)
+    !fs.existsSync(`./${req.query.image1.sneakerUrl}`) ||
+    !fs.existsSync(`./${req.query.image2.mainUrl}`) ||
+    !fs.existsSync(`./${req.query.image2.logoUrl}`) ||
+    !fs.existsSync(`./${req.query.image2.sneakerUrl}`) ||
+    !fs.existsSync(`./${req.query.image3.mainUrl}`) ||
+    !fs.existsSync(`./${req.query.image3.logoUrl}`) ||
+    !fs.existsSync(`./${req.query.image3.sneakerUrl}`) ||
+    !fs.existsSync(`./${req.query.image4.mainUrl}`) ||
+    !fs.existsSync(`./${req.query.image4.logoUrl}`) ||
+    !fs.existsSync(`./${req.query.image4.sneakerUrl}`)
   ) {
     console.error("ERROR: Image doesn't exist at specified path");
     sendLogoImage(req, res);

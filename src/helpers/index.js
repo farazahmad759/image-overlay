@@ -32,6 +32,7 @@ export async function makeOverlayImage(req, res) {
 
   let metadata = {};
 
+  console.log("this is running ==========================", req.query);
   metadata.mainImg = {
     height: req.query.mkStandardHeight * scalingFactor,
     width: req.query.mkStandardWidth * scalingFactor,
@@ -69,6 +70,7 @@ export async function makeOverlayImage(req, res) {
   req.query.data = req.query.designData;
 
   designImg = await generateDesignImage(req, res);
+
   if (!designImg || designImg.error) {
     return {
       error: designImg
@@ -121,6 +123,7 @@ export async function makeOverlayImage(req, res) {
         });
       });
   } else {
+    console.log(" ================ buffer");
     let out = await sharp("./" + req.query.mainUrl)
       .resize({
         width: parseInt(metadata.mainImg.width),
@@ -130,6 +133,10 @@ export async function makeOverlayImage(req, res) {
       .flatten({ background: { r: 255, g: 255, b: 255 } })
       .toBuffer();
 
+    fs.writeFile(outputFileName, out, function (err) {
+      if (err) return console.log(err);
+      console.log("File saved --> ", outputFileName);
+    });
     return out;
   }
 }
