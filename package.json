@@ -26,6 +26,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.0",
+    "express-validator": "^6.10.0",
     "http": "0.0.1-security",
     "image-size": "^0.8.3",
     "image-to-base64": "^2.1.1",

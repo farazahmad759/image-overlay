@@ -17,22 +17,22 @@ let { options } = yargs;
  * overlayImages
  */
 export async function overlayImages(req, res) {
-  let md5sum = crypto.createHash("md5");
-  md5sum.update(
-    req.query.productType +
-      req.query.background +
-      req.query.logoUrl +
-      req.query.designUrl +
-      req.query.designData +
-      req.query.sneakerUrl +
-      req.query.scalingFactor +
-      req.query.mainUrl
-  );
-  let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
-  if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
-    res.sendFile(outputFileName, { root: process.cwd() + "/" });
-    return null;
-  }
+  let mainUrls = {
+    "t-shirt": {
+      white: "assets/2020/07/MK-WhiteTshirt-MockUp-Blank-1.png",
+      black: "assets/2020/11/MK-BlackTshirt-MockUp-Blank.png",
+      gray: "assets/2020/11/MK-GreyTshirt-MockUp-Blank.png",
+    },
+    hoodie: {
+      white: "assets/2021/01/MK-White-Hoodie-Mock.png",
+      black: "assets/2021/01/MK-Black-Hoodie-Mock.png",
+      gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
+    },
+  };
+
+  // ---------------------------------------------------------------
+  // Validate Data
+  // ---------------------------------------------------------------
   if (!req.query.productType) {
     console.error("ERROR: productType is not provided");
     sendLogoImage(req, res);
@@ -58,18 +58,7 @@ export async function overlayImages(req, res) {
     sendLogoImage(req, res);
     return null;
   }
-  let mainUrls = {
-    "t-shirt": {
-      white: "assets/2020/07/MK-WhiteTshirt-MockUp-Blank-1.png",
-      black: "assets/2020/11/MK-BlackTshirt-MockUp-Blank.png",
-      gray: "assets/2020/11/MK-GreyTshirt-MockUp-Blank.png",
-    },
-    hoodie: {
-      white: "assets/2021/01/MK-White-Hoodie-Mock.png",
-      black: "assets/2021/01/MK-Black-Hoodie-Mock.png",
-      gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
-    },
-  };
+
   if (!req.query.mainUrl) {
     req.query.mainUrl = mainUrls[req.query.productType][req.query.background];
   }
@@ -77,6 +66,57 @@ export async function overlayImages(req, res) {
   if (!req.query.logoUrl) {
     req.query.logoUrl = "assets/2020/12/MK_logo.png";
   }
+
+  if (!req.query.mainUrl || !req.query.logoUrl || !req.query.sneakerUrl) {
+    console.error("ERROR: Make sure you provide all parameters");
+    sendLogoImage(req, res);
+    return null;
+  }
+  if (
+    !fs.existsSync(`./${req.query.mainUrl}`) ||
+    !fs.existsSync(`./${req.query.logoUrl}`) ||
+    !fs.existsSync(`./${req.query.sneakerUrl}`)
+  ) {
+    console.error("ERROR: Image doesn't exist at specified path");
+    sendLogoImage(req, res);
+    return null;
+  }
+
+  let out = await makeOverlayImage(req, res);
+}
+
+function createOutputFileName(req) {
+  let md5sum = crypto.createHash("md5");
+  md5sum.update(
+    req.query.productType +
+      req.query.background +
+      req.query.logoUrl +
+      req.query.designUrl +
+      req.query.designData +
+      req.query.sneakerUrl +
+      req.query.scalingFactor +
+      req.query.mainUrl
+  );
+  let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
+  return outputFileName;
+}
+
+/**
+ * makeOverlayImage
+ * @param {} req
+ * @param {*} res
+ */
+
+async function makeOverlayImage(req, res) {
+  // create output file name using md5
+  let outputFileName = createOutputFileName(req);
+
+  // check if the file already exists for this API
+  if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
+    res.sendFile(outputFileName, { root: process.cwd() + "/" });
+    return null;
+  }
+
   req.query.mkStandardWidth = 1008;
   req.query.mkStandardHeight = 1152;
 
@@ -84,22 +124,6 @@ export async function overlayImages(req, res) {
     ? parseFloat(req.query.scalingFactor)
     : 1;
 
-  let t0 = performance.now();
-  let { logoUrl, sneakerUrl, designUrl, mainUrl } = req.query;
-  if (!mainUrl || !logoUrl || !sneakerUrl) {
-    console.error("ERROR: Make sure you provide all parameters");
-    sendLogoImage(req, res);
-    return null;
-  }
-  if (
-    !fs.existsSync(`./${mainUrl}`) ||
-    !fs.existsSync(`./${logoUrl}`) ||
-    !fs.existsSync(`./${sneakerUrl}`)
-  ) {
-    console.error("ERROR: Image doesn't exist at specified path");
-    sendLogoImage(req, res);
-    return null;
-  }
   let metadata = {};
 
   metadata.mainImg = {
@@ -108,16 +132,15 @@ export async function overlayImages(req, res) {
   };
 
   // logo
-  let logoImg = await sharp("./" + logoUrl)
+  let logoImg = await sharp("./" + req.query.logoUrl)
     .resize({
       width: parseInt(192 * scalingFactor),
     })
     .toBuffer();
-  // console.log("type of ====", logoImg.constructor);
   metadata.logoImg = sizeOf(logoImg);
 
   // sneaker
-  let sneakerImg = await sharp("./" + sneakerUrl)
+  let sneakerImg = await sharp("./" + req.query.sneakerUrl)
     .resize(
       parseInt(300 * 1.5 * scalingFactor),
       parseInt(140 * 1.5 * scalingFactor)
@@ -149,8 +172,6 @@ export async function overlayImages(req, res) {
   metadata.designImg = sizeOf(designImg);
 
   // get output image
-  let currentData = Date.now();
-
   let arrCompositeImages = [
     {
       input: logoImg,
@@ -176,23 +197,33 @@ export async function overlayImages(req, res) {
     });
   }
 
-  // let outputFileName = `./images/sharp/output-${currentData}.jpg`;
-  // outputFileName = `./images/sharp/output-${fileName}.jpg`;
-  sharp("./" + mainUrl)
-    .resize({
-      width: parseInt(metadata.mainImg.width),
-      height: parseInt(metadata.mainImg.height),
-    })
-    .composite([...arrCompositeImages])
-    .flatten({ background: { r: 255, g: 255, b: 255 } })
-    .toFile(outputFileName, function (err) {
-      console.log("error: ", err);
-      // let t1 = performance.now();
-
-      res.sendFile(outputFileName, {
-        root: process.cwd() + "/",
+  if (req.query.outputFormat === "buffer") {
+    let out = await sharp("./" + req.query.mainUrl)
+      .resize({
+        width: parseInt(metadata.mainImg.width),
+        height: parseInt(metadata.mainImg.height),
+      })
+      .composite([...arrCompositeImages])
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .toBuffer();
+    res.end(Buffer.from(out, "utf-8"));
+  } else {
+    sharp("./" + req.query.mainUrl)
+      .resize({
+        width: parseInt(metadata.mainImg.width),
+        height: parseInt(metadata.mainImg.height),
+      })
+      .composite([...arrCompositeImages])
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .toFile(outputFileName, function (err) {
+        if (err) {
+          console.log("error: ", err);
+        }
+        res.sendFile(outputFileName, {
+          root: process.cwd() + "/",
+        });
       });
-    });
+  }
 }
 
 /****************************************
