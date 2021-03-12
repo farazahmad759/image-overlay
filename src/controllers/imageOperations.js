@@ -83,22 +83,14 @@ export async function overlayImages(req, res) {
   }
 
   let out = await makeOverlayImage(req, res);
-}
 
-function createOutputFileName(req) {
-  let md5sum = crypto.createHash("md5");
-  md5sum.update(
-    req.query.productType +
-      req.query.background +
-      req.query.logoUrl +
-      req.query.designUrl +
-      req.query.designData +
-      req.query.sneakerUrl +
-      req.query.scalingFactor +
-      req.query.mainUrl
-  );
-  let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
-  return outputFileName;
+  if (!out || out.error) {
+    console.error(out ? out.error : "ERROR: unknown error");
+    sendLogoImage(req, res);
+    return null;
+  }
+
+  res.end(Buffer.from(out, "utf-8"));
 }
 
 /**
@@ -163,11 +155,9 @@ async function makeOverlayImage(req, res) {
   req.query.data = req.query.designData;
   designImg = await generateDesignImage(req, res);
   if (!designImg || designImg.error) {
-    console.error(
-      designImg ? designImg.error : "designImg is either null or undefined"
-    );
-    sendLogoImage(req, res);
-    return null;
+    return {
+      error: "ERROR: designImg is either null or undefined",
+    };
   }
   metadata.designImg = sizeOf(designImg);
 
@@ -197,17 +187,7 @@ async function makeOverlayImage(req, res) {
     });
   }
 
-  if (req.query.outputFormat === "buffer") {
-    let out = await sharp("./" + req.query.mainUrl)
-      .resize({
-        width: parseInt(metadata.mainImg.width),
-        height: parseInt(metadata.mainImg.height),
-      })
-      .composite([...arrCompositeImages])
-      .flatten({ background: { r: 255, g: 255, b: 255 } })
-      .toBuffer();
-    res.end(Buffer.from(out, "utf-8"));
-  } else {
+  if (req.query.outputFormat === "from-file") {
     sharp("./" + req.query.mainUrl)
       .resize({
         width: parseInt(metadata.mainImg.width),
@@ -223,6 +203,16 @@ async function makeOverlayImage(req, res) {
           root: process.cwd() + "/",
         });
       });
+  } else {
+    let out = await sharp("./" + req.query.mainUrl)
+      .resize({
+        width: parseInt(metadata.mainImg.width),
+        height: parseInt(metadata.mainImg.height),
+      })
+      .composite([...arrCompositeImages])
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .toBuffer();
+    return out;
   }
 }
 
@@ -409,4 +399,19 @@ function getImgFromSymlink(path) {
   //   (await axios.get(logoUrl, { responseType: "arraybuffer" })).data,
   //   "utf-8"
   // )).resize(200,300).toBuffer(): "./images/logo-resized.png";
+}
+function createOutputFileName(req) {
+  let md5sum = crypto.createHash("md5");
+  md5sum.update(
+    req.query.productType +
+      req.query.background +
+      req.query.logoUrl +
+      req.query.designUrl +
+      req.query.designData +
+      req.query.sneakerUrl +
+      req.query.scalingFactor +
+      req.query.mainUrl
+  );
+  let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
+  return outputFileName;
 }
