@@ -1,12 +1,11 @@
 import express from "express";
+import { overlayImages, get4by4Image } from "../controllers/imageOperations.js";
 import {
-  overlayImages,
-  get4by4Image,
   resizeImages,
   getAnImageLocally,
   getAnImageFromApi,
   convertSvgToPng,
-} from "../controllers/imageOperations.js";
+} from "../controllers/tempOperations.js";
 let router = express.Router();
 
 router.get("/v1/convertSvgToPng", convertSvgToPng);
