@@ -287,7 +287,9 @@ export async function get4by4Image(req, res) {
   let comp3;
   let comp4;
   let compWidth = 192 * req.query.scalingFactor;
-  let compPadding = 8;
+  let compPadding = req.query.compPadding
+    ? Math.abs(parseInt(req.query.compPadding))
+    : 8;
   // comp1
   if (out1.msg) {
     comp1 = await sharp("./" + out1.msg["get-file-from-path"])
@@ -351,7 +353,7 @@ export async function get4by4Image(req, res) {
       width: parseInt(compWidth * 2 + compPadding * 3),
       height: parseInt(compHeight * 2 + compPadding * 3),
       channels: 4,
-      background: { r: 255, g: 0, b: 0, alpha: 0.5 },
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
   })
     .png()
