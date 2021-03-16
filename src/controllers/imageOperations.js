@@ -7,7 +7,11 @@ import sharp from "sharp";
 import { performance } from "perf_hooks";
 import yargs from "yargs";
 import fs from "fs";
-import { makeOverlayImage, sendLogoImage } from "./../helpers/index.js";
+import {
+  makeOverlayImage,
+  sendLogoImage,
+  createOutputFileName,
+} from "./../helpers/index.js";
 import sizeOf from "image-size";
 
 let mainUrls = {
@@ -102,13 +106,31 @@ export async function overlayImages(req, res) {
  */
 
 export async function get4by4Image(req, res) {
+  // ---------------------------------------------------------------
+  // Check for cached image
+  // ---------------------------------------------------------------
+  let outputFileName = createOutputFileName(req);
+  if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
+    res.sendFile(outputFileName, { root: process.cwd() + "/" });
+    return null;
+  }
+  // ---------------------------------------------------------------
+  // Validate Data
+  // ---------------------------------------------------------------
+  if (
+    !req.query.image1 ||
+    !req.query.image2 ||
+    !req.query.image3 ||
+    !req.query.image4
+  ) {
+    console.error("ERROR: please provide all 4 images");
+    sendLogoImage(req, res);
+    return null;
+  }
   req.query.image1 = JSON.parse(req.query.image1);
   req.query.image2 = JSON.parse(req.query.image2);
   req.query.image3 = JSON.parse(req.query.image3);
   req.query.image4 = JSON.parse(req.query.image4);
-  // ---------------------------------------------------------------
-  // Validate Data
-  // ---------------------------------------------------------------
   if (
     !req.query.image1.productType ||
     !req.query.image2.productType ||
@@ -384,6 +406,9 @@ export async function get4by4Image(req, res) {
       },
     ])
     .toBuffer();
-
+  fs.writeFile(outputFileName, tempOut, function (err) {
+    if (err) return console.log(err);
+    console.log("File saved --> ", outputFileName);
+  });
   res.end(Buffer.from(tempOut, "utf-8"));
 }

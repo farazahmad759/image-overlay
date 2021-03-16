@@ -152,6 +152,21 @@ export function createOutputFileName(req) {
     req.query.sneakerUrl +
     req.query.scalingFactor +
     req.query.mainUrl;
+  if (req.query.image1) {
+    data += req.query.image1; // image1 is applicable for 4by4Image
+  }
+  if (req.query.image2) {
+    data += req.query.image2; // image2 is applicable for 4by4Image
+  }
+  if (req.query.image3) {
+    data += req.query.image3; // image3 is applicable for 4by4Image
+  }
+  if (req.query.image4) {
+    data += req.query.image4; // image4 is applicable for 4by4Image
+  }
+  if (req.query.compPadding) {
+    data += req.query.compPadding; // compPadding is applicable for 4by4Image
+  }
   md5sum.update(data ? data : "default-name");
   let outputFileName = "./images/sharp/output-" + md5sum.digest("hex") + ".jpg";
   return outputFileName;
