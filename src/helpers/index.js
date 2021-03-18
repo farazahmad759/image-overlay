@@ -50,7 +50,7 @@ export async function makeOverlayImage(req, res) {
   let sneakerImg = await sharp("./" + req.query.sneakerUrl)
     .resize(
       parseInt(300 * 1.5 * scalingFactor),
-      parseInt(140 * 1.5 * scalingFactor)
+      parseInt(165 * 1.5 * scalingFactor)
     )
     .toBuffer();
   metadata.sneakerImg = sizeOf(sneakerImg);
@@ -100,7 +100,7 @@ export async function makeOverlayImage(req, res) {
       gravity: "southeast",
       top:
         req.query.productType === "t-shirt"
-          ? parseInt(metadata.mainImg.height - 260 * scalingFactor)
+          ? parseInt(metadata.mainImg.height - 280 * scalingFactor)
           : parseInt(metadata.mainImg.height - 50 * scalingFactor),
       left: 0,
     });
