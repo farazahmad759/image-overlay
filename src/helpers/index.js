@@ -32,7 +32,6 @@ export async function makeOverlayImage(req, res) {
 
   let metadata = {};
 
-  console.log("this is running ==========================", req.query);
   metadata.mainImg = {
     height: req.query.mkStandardHeight * scalingFactor,
     width: req.query.mkStandardWidth * scalingFactor,
@@ -123,7 +122,6 @@ export async function makeOverlayImage(req, res) {
         });
       });
   } else {
-    console.log(" ================ buffer");
     let out = await sharp("./" + req.query.mainUrl)
       .resize({
         width: parseInt(metadata.mainImg.width),
@@ -182,7 +180,6 @@ export async function generateDesignImage(req, res) {
 
   // parse data
   let decodedData = [];
-  console.log(" ================svg data = ", data);
   try {
     decodedData = data ? JSON.parse(data) : [];
   } catch (e) {

@@ -28,6 +28,7 @@ let mainUrls = {
 };
 
 var apiCounters = {
+  date: new Date(),
   convertSvgToPng: {
     success_cached: 0,
     success_fresh: 0,
