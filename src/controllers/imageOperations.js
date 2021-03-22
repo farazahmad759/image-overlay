@@ -13,6 +13,7 @@ import {
   createOutputFileName,
 } from "./../helpers/index.js";
 import sizeOf from "image-size";
+import { apiCounters } from "./../apiCounters.js";
 
 let mainUrls = {
   "t-shirt": {
@@ -24,25 +25,6 @@ let mainUrls = {
     white: "assets/2021/01/MK-White-Hoodie-Mock.png",
     black: "assets/2021/01/MK-Black-Hoodie-Mock.png",
     gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
-  },
-};
-
-var apiCounters = {
-  date: new Date(),
-  convertSvgToPng: {
-    success_cached: 0,
-    success_fresh: 0,
-    error: 0,
-  },
-  get4by4Image: {
-    success_cached: 0,
-    success_fresh: 0,
-    error: 0,
-  },
-  overlayImages: {
-    success_cached: 0,
-    success_fresh: 0,
-    error: 0,
   },
 };
 

@@ -3,7 +3,7 @@ import processImage from "./codec/index.js";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
-
+import { apiCounters } from "./../apiCounters.js";
 const converterRoutes = (app) => {
   app.use((req, res, next) => {
     res.header(
@@ -14,10 +14,12 @@ const converterRoutes = (app) => {
   });
 
   app.get("/api/v1/convert", async (req, res) => {
+    console.log(" == API COUNTERS == ", apiCounters);
     //get the params
     const { data, file } = req.query;
     if (!file) {
       res.status(500).send("File not provided");
+      apiCounters.convertSvgToPng.error++;
       return null;
     }
     //parse them
@@ -29,6 +31,7 @@ const converterRoutes = (app) => {
       (err) => {
         //should be able to debug here too; process itself error should be shown here
         console.log("----> processImageError: ", err, "<-------");
+        apiCounters.convertSvgToPng.error++;
         return null;
       }
     );
@@ -40,6 +43,7 @@ const converterRoutes = (app) => {
         .send(
           "There was an error with the file provided, please clean the image and try again"
         );
+      apiCounters.convertSvgToPng.error++;
     } else {
       //----success response to client
       pngBinaryResponse = pngBinaryResponse.replace("svgjs:data", "svgjs");
@@ -71,7 +75,9 @@ const converterRoutes = (app) => {
               (err) => {
                 if (err) {
                   console.log(err);
+                  apiCounters.convertSvgToPng.error++;
                 } else {
+                  apiCounters.convertSvgToPng.success_fresh++;
                   //---delete the files after it is sent
                   //delete the svg file
 
@@ -119,7 +125,9 @@ const converterRoutes = (app) => {
         res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), (err) => {
           if (err) {
             console.log(err);
+            apiCounters.convertSvgToPng.error++;
           } else {
+            apiCounters.convertSvgToPng.success_fresh++;
             //---delete the files after it is sent
             //delete the svg file
 
