@@ -7,7 +7,6 @@ import {
   convertSvgToPng,
 } from "../controllers/tempOperations.js";
 let router = express.Router();
-
 router.get("/v1/convertSvgToPng", convertSvgToPng);
 router.get("/v1/get4by4Image", get4by4Image);
 router.get("/v1/resizeImages", resizeImages);

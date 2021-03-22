@@ -27,21 +27,42 @@ let mainUrls = {
   },
 };
 
+var apiCounters = {
+  convertSvgToPng: {
+    success_cached: 0,
+    success_fresh: 0,
+    error: 0,
+  },
+  get4by4Image: {
+    success_cached: 0,
+    success_fresh: 0,
+    error: 0,
+  },
+  overlayImages: {
+    success_cached: 0,
+    success_fresh: 0,
+    error: 0,
+  },
+};
+
 /**
  * overlayImages
  */
 export async function overlayImages(req, res) {
+  console.log(" == API COUNTERS == ", apiCounters);
   // ---------------------------------------------------------------
   // Validate Data
   // ---------------------------------------------------------------
   if (!req.query.productType) {
     console.error("ERROR: productType is not provided");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
   if (!req.query.background) {
     console.error("ERROR: background is not provided");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
   req.query.productType = req.query.productType.toLowerCase();
@@ -52,11 +73,13 @@ export async function overlayImages(req, res) {
   if (!["t-shirt", "hoodie"].includes(req.query.productType)) {
     console.error("ERROR: Invalid Prouct-type");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
   if (!["white", "black", "gray"].includes(req.query.background)) {
     console.error("ERROR: Invalid background color");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
 
@@ -71,6 +94,7 @@ export async function overlayImages(req, res) {
   if (!req.query.mainUrl || !req.query.logoUrl || !req.query.sneakerUrl) {
     console.error("ERROR: Make sure you provide all parameters");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
   if (
@@ -80,6 +104,7 @@ export async function overlayImages(req, res) {
   ) {
     console.error("ERROR: Image doesn't exist at specified path");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
 
@@ -88,13 +113,15 @@ export async function overlayImages(req, res) {
   if (!out || out.error) {
     console.error(out ? out.error : "ERROR: unknown error");
     sendLogoImage(req, res);
+    apiCounters.overlayImages.error++;
     return null;
   }
   if (out.msg) {
     res.sendFile(out.msg["get-file-from-path"], { root: process.cwd() + "/" });
+    apiCounters.overlayImages.success_cached++;
     return null;
   }
-
+  apiCounters.overlayImages.success_fresh++;
   res.end(Buffer.from(out, "utf-8"));
 }
 
@@ -106,12 +133,14 @@ export async function overlayImages(req, res) {
  */
 
 export async function get4by4Image(req, res) {
+  console.log(" == API COUNTERS == ", apiCounters);
   // ---------------------------------------------------------------
   // Check for cached image
   // ---------------------------------------------------------------
   let outputFileName = createOutputFileName(req);
   if (fs.existsSync(outputFileName) && req.query.forceRefresh != "true") {
     res.sendFile(outputFileName, { root: process.cwd() + "/" });
+    apiCounters.get4by4Image.success_cached++;
     return null;
   }
   // ---------------------------------------------------------------
@@ -125,6 +154,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: please provide all 4 images");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   req.query.image1 = JSON.parse(req.query.image1);
@@ -139,6 +169,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: productType is not provided");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   if (
@@ -149,6 +180,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: background is not provided");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   req.query.image1.productType = req.query.image1.productType.toLowerCase();
@@ -179,6 +211,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: Invalid Prouct-type");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   if (
@@ -189,6 +222,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: Invalid background color");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
 
@@ -236,6 +270,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: Make sure you provide all parameters");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   if (
@@ -254,6 +289,7 @@ export async function get4by4Image(req, res) {
   ) {
     console.error("ERROR: Image doesn't exist at specified path");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
 
@@ -278,24 +314,28 @@ export async function get4by4Image(req, res) {
   if (!out1 || out1.error) {
     console.error(out1 ? out1.error : "ERROR: unknown error");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   // out2
   if (!out2 || out2.error) {
     console.error(out2 ? out2.error : "ERROR: unknown error");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   // out3
   if (!out3 || out3.error) {
     console.error(out3 ? out3.error : "ERROR: unknown error");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
   // out4
   if (!out4 || out4.error) {
     console.error(out4 ? out4.error : "ERROR: unknown error");
     sendLogoImage(req, res);
+    apiCounters.get4by4Image.error++;
     return null;
   }
 
@@ -410,5 +450,6 @@ export async function get4by4Image(req, res) {
     if (err) return console.log(err);
     console.log("File saved --> ", outputFileName);
   });
+  apiCounters.get4by4Image.success_fresh++;
   res.end(Buffer.from(tempOut, "utf-8"));
 }
