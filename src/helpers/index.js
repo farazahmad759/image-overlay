@@ -47,13 +47,18 @@ export async function makeOverlayImage(req, res) {
 
   // sneaker
   let sneakerImg = await sharp("./" + req.query.sneakerUrl)
-    .resize(
-      parseInt(300 * 1.5 * scalingFactor),
-      parseInt(165 * 1.5 * scalingFactor)
-    )
+    .resize({
+      width: parseInt(300 * 1.5 * scalingFactor),
+    })
+    .trim()
+    // .resize(
+    //   parseInt(300 * 1.5 * scalingFactor),
+    //   parseInt(165 * 1.5 * scalingFactor)
+    // )
     .toBuffer();
   metadata.sneakerImg = sizeOf(sneakerImg);
 
+  console.log(" sneaker image size ===== ", metadata.sneakerImg);
   // design
   let designImg = "./images/design-resized.png";
   if (req.query.productType === "t-shirt") {
@@ -94,13 +99,14 @@ export async function makeOverlayImage(req, res) {
     },
   ];
   if (req.query.hideSneaker !== "true") {
+    let _ht =
+      metadata.mainImg.height - metadata.sneakerImg.height - 60 * scalingFactor;
+    let _hh =
+      metadata.mainImg.height - metadata.sneakerImg.height - 10 * scalingFactor;
     arrCompositeImages.push({
       input: sneakerImg,
       gravity: "southeast",
-      top:
-        req.query.productType === "t-shirt"
-          ? parseInt(metadata.mainImg.height - 280 * scalingFactor)
-          : parseInt(metadata.mainImg.height - 50 * scalingFactor),
+      top: req.query.productType === "t-shirt" ? parseInt(_ht) : parseInt(_hh),
       left: 0,
     });
   }

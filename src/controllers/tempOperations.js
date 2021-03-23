@@ -1,3 +1,8 @@
+import { performance } from "perf_hooks";
+import fs from "fs";
+import sharp from "sharp";
+import sizeOf from "image-size";
+
 export function resizeImages(req, res) {
   let MKStandardWidth = 1008;
   let MKStandardHeight = 1152;
@@ -52,6 +57,10 @@ export async function convertSvgToPng(req, res) {
 export async function getAnImageLocally(req, res) {
   //
   let t0 = performance.now();
+  let scalingFactor = 1;
+  if (req.query.scalingFactor) {
+    scalingFactor = parseFloat(req.query.scalingFactor);
+  }
   if (!req.query.path) {
     res.send({
       error: "Please provide a path to image",
@@ -66,10 +75,20 @@ export async function getAnImageLocally(req, res) {
   }
   // res.sendFile(req.query.path, { root: process.cwd() });
 
+  console.log(scalingFactor);
   let out = await sharp(req.query.path).toBuffer();
+  let outDimensions = sizeOf(out);
+  let out2 = await sharp(req.query.path)
+    .resize({
+      width: parseInt(outDimensions.width * scalingFactor),
+    })
+    .jpeg()
+    .trim()
+    .toBuffer();
+
   let t1 = performance.now();
   // console.log("Time (ms) to fetch an Image by an API = ", t1 - t0);
-  res.end(Buffer.from(out, "base64"));
+  res.end(Buffer.from(out2, "base64"));
 }
 
 export async function getAnImageFromApi(req, res) {
