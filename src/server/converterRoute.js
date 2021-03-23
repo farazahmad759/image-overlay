@@ -23,7 +23,16 @@ const converterRoutes = (app) => {
       return null;
     }
     //parse them
-    const decodedData = data ? JSON.parse(data) : [];
+    let decodedData = [];
+    if (data) {
+      try {
+        decodedData = JSON.parse(data);
+      } catch (err) {
+        res.status(500).send("Cannot Parse Data");
+        apiCounters.convertSvgToPng.error++;
+        return null;
+      }
+    }
     const __file = file.split("/").pop();
 
     //process to edit and get the image file

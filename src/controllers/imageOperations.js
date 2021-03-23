@@ -37,13 +37,17 @@ export async function overlayImages(req, res) {
   // Validate Data
   // ---------------------------------------------------------------
   if (!req.query.productType) {
-    console.error("ERROR: productType is not provided");
+    let mkCustomMessage = "ERROR: productType is not provided";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
   }
   if (!req.query.background) {
-    console.error("ERROR: background is not provided");
+    let mkCustomMessage = "ERROR: background is not provided";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
@@ -54,13 +58,17 @@ export async function overlayImages(req, res) {
     req.query.background = "gray";
   }
   if (!["t-shirt", "hoodie"].includes(req.query.productType)) {
-    console.error("ERROR: Invalid Prouct-type");
+    let mkCustomMessage = "ERROR: Invalid Prouct-type";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
   }
   if (!["white", "black", "gray"].includes(req.query.background)) {
-    console.error("ERROR: Invalid background color");
+    let mkCustomMessage = "ERROR: Invalid background color";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
@@ -75,7 +83,9 @@ export async function overlayImages(req, res) {
   }
 
   if (!req.query.mainUrl || !req.query.logoUrl || !req.query.sneakerUrl) {
-    console.error("ERROR: Make sure you provide all parameters");
+    let mkCustomMessage = "ERROR: Make sure you provide all parameters";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
@@ -85,7 +95,9 @@ export async function overlayImages(req, res) {
     !fs.existsSync(`./${req.query.logoUrl}`) ||
     !fs.existsSync(`./${req.query.sneakerUrl}`)
   ) {
-    console.error("ERROR: Image doesn't exist at specified path");
+    let mkCustomMessage = "ERROR: Image doesn't exist at specified path";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
@@ -94,7 +106,9 @@ export async function overlayImages(req, res) {
   let out = await makeOverlayImage(req, res);
 
   if (!out || out.error) {
-    console.error(out ? out.error : "ERROR: unknown error");
+    let mkCustomMessage = out ? out.error : "ERROR: unknown error";
+    console.error(mkCustomMessage);
+    res.set("MK-Custom-Message", mkCustomMessage);
     sendLogoImage(req, res);
     apiCounters.overlayImages.error++;
     return null;
@@ -105,6 +119,7 @@ export async function overlayImages(req, res) {
     return null;
   }
   apiCounters.overlayImages.success_fresh++;
+  res.set("MK-Custom-Message", "Success");
   res.end(Buffer.from(out, "utf-8"));
 }
 
