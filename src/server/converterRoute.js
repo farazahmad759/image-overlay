@@ -127,7 +127,7 @@ const converterRoutes = (app) => {
           });
       } else {
         let _out = await sharp(`downloads/${tempSVGFileName}`).png();
-        if (req.query.trim && req.query.trim == "true") {
+        if (req.query.shouldTrim && req.query.shouldTrim == "true") {
           _out = await _out.trim().toFile(`downloads/${tempPngFileName}`);
         } else {
           _out = await _out.toFile(`downloads/${tempPngFileName}`);
