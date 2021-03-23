@@ -126,9 +126,12 @@ const converterRoutes = (app) => {
             console.log(err);
           });
       } else {
-        await sharp(`downloads/${tempSVGFileName}`)
-          .png()
-          .toFile(`downloads/${tempPngFileName}`);
+        let _out = await sharp(`downloads/${tempSVGFileName}`).png();
+        if (req.query.trim && req.query.trim == "true") {
+          _out = await _out.trim().toFile(`downloads/${tempPngFileName}`);
+        } else {
+          _out = await _out.toFile(`downloads/${tempPngFileName}`);
+        }
         //send the file to the client
 
         res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), (err) => {
