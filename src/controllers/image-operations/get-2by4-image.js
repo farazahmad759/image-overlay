@@ -29,6 +29,9 @@ export async function get2by4Image(req, res) {
   if (!req.query.numImages) {
     req.query.numImages = 4;
   }
+  if (!req.query.grid) {
+    req.query.grid = "[2, 2]";
+  }
   ////////////////////////////////////////////////
   // validate request
   ////////////////////////////////////////////////
@@ -41,10 +44,11 @@ export async function get2by4Image(req, res) {
     return null;
   }
   try {
+    req.query.grid = JSON.parse(req.query.grid);
     req.query.images = JSON.parse(req.query.images);
   } catch (err) {
-    console.log(req.query.images);
-    res.send("ERROR: images parameter should be a parseable as a JSON object");
+    console.error(err);
+    res.send("ERROR: cannot parse JSON");
     return null;
   }
   ////////////////////////////////////////////////
@@ -52,25 +56,49 @@ export async function get2by4Image(req, res) {
   ////////////////////////////////////////////////
   let images = [];
   for (let i = 0; i < req.query.images.length; i++) {
-    //
-    let _img = null;
-    try {
-      _img = await fetchAnOverlayImage({
-        ...req.query.images[i],
-        scalingFactor: req.query.scalingFactor,
-      });
-      images.push(_img);
-    } catch (err) {
-      res.send(err);
-      return null;
+    if (i < req.query.grid[0] * req.query.grid[1]) {
+      let _img = null;
+      try {
+        if (i === req.query.insertLogoAtIndex - 1) {
+          _img = await sharp("./assets/2020/12/MK_logo.png")
+            .resize({ width: parseInt(200) })
+            .toBuffer();
+        } else {
+          _img = await fetchAnOverlayImage({
+            ...req.query.images[i],
+            scalingFactor: req.query.scalingFactor,
+          });
+        }
+        let _size = sizeOf(_img);
+        images.push({
+          input: _img,
+          top: 0,
+          top: parseInt(Math.floor(i / req.query.grid[1]) * _size.height),
+          left: parseInt((i % req.query.grid[1]) * _size.width),
+        });
+      } catch (err) {
+        res.send(err);
+        return null;
+      }
     }
   }
-  console.log(" ==== images === ", images);
+  //   console.log(" ==== images === ", images);
   ////////////////////////////////////////////////
   // combine overlay images
   ////////////////////////////////////////////////
+  let _out = await sharp({
+    create: {
+      width: parseInt(1000),
+      height: parseInt(2000),
+      channels: 4,
+      background: { r: 255, g: 255, b: 0, alpha: 1 },
+    },
+  })
+    .composite([...images])
+    .jpeg()
+    .toBuffer();
 
-  res.end(Buffer.from(images[0], "utf-8"));
+  res.end(Buffer.from(_out, "utf-8"));
   //   res.send("done");
 }
 
