@@ -22,6 +22,7 @@ export async function get2by4Image(req, res) {
   if (!req.query.scalingFactor) {
     req.query.scalingFactor = 1;
   }
+  req.query.scalingFactor = parseFloat(req.query.scalingFactor);
   if (!req.query.padding) {
     req.query.padding = 0;
   }
@@ -54,7 +55,10 @@ export async function get2by4Image(req, res) {
     //
     let _img = null;
     try {
-      _img = await fetchAnOverlayImage(req.query.images[i]);
+      _img = await fetchAnOverlayImage({
+        ...req.query.images[i],
+        scalingFactor: req.query.scalingFactor,
+      });
       images.push(_img);
     } catch (err) {
       res.send(err);
@@ -71,22 +75,25 @@ export async function get2by4Image(req, res) {
 }
 
 async function fetchAnOverlayImage(params) {
+  if (!params.scalingFactor) {
+    params.scalingFactor = 1;
+  }
   let dimensions = {
     outputImg: {
-      width: 1008,
-      height: 1152,
+      width: parseInt(1008 * params.scalingFactor),
+      height: parseInt(1152 * params.scalingFactor),
     },
     mainImg: {
-      width: 1008,
-      height: 1152,
+      width: parseInt(1008 * params.scalingFactor),
+      height: parseInt(1152 * params.scalingFactor),
     },
     logoImg: {
-      width: 150,
-      height: 0,
+      width: parseInt(240 * params.scalingFactor),
+      height: parseInt(0 * params.scalingFactor),
     },
     sneakerImg: {
-      width: 300,
-      height: 0,
+      width: parseInt(500 * params.scalingFactor),
+      height: parseInt(0 * params.scalingFactor),
     },
   };
   return new Promise(async (resolve, reject) => {
@@ -155,8 +162,8 @@ async function fetchAnOverlayImage(params) {
     try {
       _out = await sharp({
         create: {
-          width: dimensions.outputImg.width,
-          height: dimensions.outputImg.height,
+          width: parseInt(dimensions.outputImg.width),
+          height: parseInt(dimensions.outputImg.height),
           channels: 4,
           background: { r: 255, g: 255, b: 0, alpha: 1 },
         },
@@ -167,13 +174,17 @@ async function fetchAnOverlayImage(params) {
           },
           {
             input: _logoImg,
-            top: 10,
-            left: dimensions.outputImg.width - dimensions.logoImg.width,
+            top: parseInt(0),
+            left: parseInt(
+              dimensions.outputImg.width - dimensions.logoImg.width
+            ),
           },
           {
             input: _sneakerImg,
-            top: dimensions.outputImg.height - dimensions.logoImg.height - 40,
-            left: 10,
+            top: parseInt(
+              dimensions.outputImg.height - dimensions.logoImg.height * 0.5
+            ),
+            left: parseInt(0),
           },
         ])
         .jpeg()
