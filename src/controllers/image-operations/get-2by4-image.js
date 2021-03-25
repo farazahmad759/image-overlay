@@ -19,6 +19,8 @@ export async function get2by4Image(req, res) {
   ////////////////////////////////////////////////
   // default values
   ////////////////////////////////////////////////
+  let mkStandardWidth = 1008;
+  let mkStandardHeight = 1152;
   if (!req.query.scalingFactor) {
     req.query.scalingFactor = 1;
   }
@@ -61,7 +63,9 @@ export async function get2by4Image(req, res) {
       try {
         if (i === req.query.insertLogoAtIndex - 1) {
           _img = await sharp("./assets/2020/12/MK_logo.png")
-            .resize({ width: parseInt(200) })
+            .resize({
+              width: parseInt(mkStandardWidth * req.query.scalingFactor),
+            })
             .toBuffer();
         } else {
           _img = await fetchAnOverlayImage({
@@ -88,8 +92,12 @@ export async function get2by4Image(req, res) {
   ////////////////////////////////////////////////
   let _out = await sharp({
     create: {
-      width: parseInt(1000),
-      height: parseInt(2000),
+      width: parseInt(
+        mkStandardWidth * req.query.scalingFactor * req.query.grid[1]
+      ),
+      height: parseInt(
+        mkStandardHeight * req.query.scalingFactor * req.query.grid[0]
+      ),
       channels: 4,
       background: { r: 255, g: 255, b: 0, alpha: 1 },
     },
