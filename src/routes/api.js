@@ -1,5 +1,6 @@
 import express from "express";
 import { overlayImages, get4by4Image } from "../controllers/imageOperations.js";
+import { get2by4Image } from "../controllers/image-operations/get-2by4-image.js";
 import {
   resizeImages,
   getAnImageLocally,
@@ -9,6 +10,7 @@ import {
 let router = express.Router();
 router.get("/v1/convertSvgToPng", convertSvgToPng);
 router.get("/v1/get4by4Image", get4by4Image);
+router.get("/v1/get2by4Image", get2by4Image);
 router.get("/v1/resizeImages", resizeImages);
 router.get("/v1/overlayImages", overlayImages);
 router.get("/v1/getAnImageLocally", getAnImageLocally);
