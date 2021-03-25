@@ -61,19 +61,24 @@ export async function get2by4Image(req, res) {
     if (i < req.query.grid[0] * req.query.grid[1]) {
       let _img = null;
       try {
+        let _size = null;
         if (i === req.query.insertLogoAtIndex - 1) {
           _img = await sharp("./assets/2020/12/MK_logo.png")
             .resize({
               width: parseInt(mkStandardWidth * req.query.scalingFactor),
             })
             .toBuffer();
+          _size = {
+            width: parseInt(mkStandardWidth * req.query.scalingFactor),
+            height: parseInt(mkStandardHeight * req.query.scalingFactor),
+          };
         } else {
           _img = await fetchAnOverlayImage({
             ...req.query.images[i],
             scalingFactor: req.query.scalingFactor,
           });
+          _size = sizeOf(_img);
         }
-        let _size = sizeOf(_img);
         images.push({
           input: _img,
           top: 0,
