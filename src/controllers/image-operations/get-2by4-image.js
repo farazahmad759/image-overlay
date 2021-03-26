@@ -39,6 +39,11 @@ export async function get2by4Image(req, res) {
     res.send("ERROR: cannot parse JSON");
     return null;
   }
+  //   if (req.query.insertLogoAtIndex) {
+  //     req.query.images.splice(req.query.insertLogoAtIndex - 1, 0, {
+  //       mainUrl: "assets/2020/12/MK_logo.png",
+  //     });
+  //   }
   req.query.numImages = req.query.grid[0] * req.query.grid[1];
   ////////////////////////////////////////////////
   // validate request
@@ -64,8 +69,8 @@ export async function get2by4Image(req, res) {
       let _img = null;
       try {
         let _size = null;
-        if (i === req.query.insertLogoAtIndex - 1) {
-          _img = await sharp("./assets/2020/12/MK_logo.png")
+        if (req.query.images[i].staticImagePath) {
+          _img = await sharp("./" + req.query.images[i].staticImagePath)
             .resize({
               width: parseInt(mkStandardWidth * req.query.scalingFactor),
             })
