@@ -10,7 +10,7 @@ let mainUrls = {
   },
   hoodie: {
     white: "assets/2021/01/MK-White-Hoodie-Mock.png",
-    black: "assets/2021/01/MK-Black-Hoodie-Mock.png",
+    black: "assets/2021/01/MK-Black-Hoodie-Mock-min.png",
     gray: "assets/2021/01/MK-Grey-Hoodie-Mock-2.png",
   },
 };
@@ -28,22 +28,8 @@ export async function get2by4Image(req, res) {
   if (!req.query.padding) {
     req.query.padding = 0;
   }
-  if (!req.query.numImages) {
-    req.query.numImages = 4;
-  }
   if (!req.query.grid) {
     req.query.grid = "[2, 2]";
-  }
-  ////////////////////////////////////////////////
-  // validate request
-  ////////////////////////////////////////////////
-  if (!req.query.images || req.query.images.length < req.query.numImages) {
-    res.send(
-      "ERROR: images should be an array array having at least " +
-        req.query.numImages +
-        " images."
-    );
-    return null;
   }
   try {
     req.query.grid = JSON.parse(req.query.grid);
@@ -51,6 +37,22 @@ export async function get2by4Image(req, res) {
   } catch (err) {
     console.error(err);
     res.send("ERROR: cannot parse JSON");
+    return null;
+  }
+  req.query.numImages = req.query.grid[0] * req.query.grid[1];
+  ////////////////////////////////////////////////
+  // validate request
+  ////////////////////////////////////////////////
+  if (
+    !req.query.images ||
+    !req.query.numImages ||
+    req.query.images.length < req.query.numImages
+  ) {
+    res.send(
+      "ERROR: images should be an array array having at least " +
+        req.query.numImages +
+        " images."
+    );
     return null;
   }
   ////////////////////////////////////////////////
@@ -172,7 +174,6 @@ async function fetchAnOverlayImage(params) {
       reject("ERROR: invalid background color");
     }
     params.mainUrl = mainUrls[params.productType][params.background];
-
     // fetch individual images
     let _mainImg = null;
     let _logoImg = null;
