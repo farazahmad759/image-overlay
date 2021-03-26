@@ -182,7 +182,7 @@ async function fetchAnOverlayImage(params) {
       _mainImg = await fetchAnImage({
         path: params.mainUrl,
         dimensions: dimensions.mainImg,
-        trim: true,
+        // trim: true,
       });
       _logoImg = await fetchAnImage({
         path: params.logoUrl,
