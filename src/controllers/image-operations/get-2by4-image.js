@@ -70,21 +70,33 @@ export async function get2by4Image(req, res) {
       try {
         let _size = null;
         if (req.query.images[i].staticImagePath) {
-          _img = await sharp("./" + req.query.images[i].staticImagePath)
-            .resize({
+          try {
+            _img = await sharp("./" + req.query.images[i].staticImagePath)
+              .resize({
+                width: parseInt(mkStandardWidth * req.query.scalingFactor),
+              })
+              .toBuffer();
+            _size = {
               width: parseInt(mkStandardWidth * req.query.scalingFactor),
-            })
-            .toBuffer();
-          _size = {
-            width: parseInt(mkStandardWidth * req.query.scalingFactor),
-            height: parseInt(mkStandardHeight * req.query.scalingFactor),
-          };
+              height: parseInt(mkStandardHeight * req.query.scalingFactor),
+            };
+          } catch (err) {
+            console.log("ERROR: ", err);
+            res.send("ERROR: Input file is missing for staticImage");
+            return null;
+          }
         } else {
-          _img = await fetchAnOverlayImage({
-            ...req.query.images[i],
-            scalingFactor: req.query.scalingFactor,
-          });
-          _size = sizeOf(_img);
+          try {
+            _img = await fetchAnOverlayImage({
+              ...req.query.images[i],
+              scalingFactor: req.query.scalingFactor,
+            });
+            _size = sizeOf(_img);
+          } catch (err) {
+            console.log("ERROR: ", err);
+            res.send("ERROR: cannot fetchAnOverlayImage");
+            return null;
+          }
         }
         images.push({
           input: _img,
@@ -102,23 +114,28 @@ export async function get2by4Image(req, res) {
   ////////////////////////////////////////////////
   // combine overlay images
   ////////////////////////////////////////////////
-  let _out = await sharp({
-    create: {
-      width: parseInt(
-        mkStandardWidth * req.query.scalingFactor * req.query.grid[1]
-      ),
-      height: parseInt(
-        mkStandardHeight * req.query.scalingFactor * req.query.grid[0]
-      ),
-      channels: 4,
-      background: { r: 255, g: 255, b: 0, alpha: 1 },
-    },
-  })
-    .composite([...images])
-    .jpeg()
-    .toBuffer();
-
-  res.end(Buffer.from(_out, "utf-8"));
+  try {
+    let _out = await sharp({
+      create: {
+        width: parseInt(
+          mkStandardWidth * req.query.scalingFactor * req.query.grid[1]
+        ),
+        height: parseInt(
+          mkStandardHeight * req.query.scalingFactor * req.query.grid[0]
+        ),
+        channels: 4,
+        background: { r: 255, g: 255, b: 0, alpha: 1 },
+      },
+    })
+      .composite([...images])
+      .jpeg()
+      .toBuffer();
+    res.end(Buffer.from(_out, "utf-8"));
+  } catch (err) {
+    console.log(err);
+    res.send("ERROR: Cannot create Grid of images");
+    return null;
+  }
   //   res.send("done");
 }
 
@@ -136,11 +153,11 @@ async function fetchAnOverlayImage(params) {
       height: parseInt(1152 * params.scalingFactor),
     },
     logoImg: {
-      width: parseInt(240 * params.scalingFactor),
+      width: parseInt(230 * params.scalingFactor),
       height: parseInt(0 * params.scalingFactor),
     },
     sneakerImg: {
-      width: parseInt(500 * params.scalingFactor),
+      width: parseInt(450 * params.scalingFactor),
       height: parseInt(0 * params.scalingFactor),
     },
   };
