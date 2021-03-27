@@ -16,6 +16,7 @@ let mainUrls = {
 };
 
 export async function get2by4Image(req, res) {
+  debug_api_2by4_images("hello", "hello", { dd: "dd" });
   ////////////////////////////////////////////////
   // default values
   ////////////////////////////////////////////////

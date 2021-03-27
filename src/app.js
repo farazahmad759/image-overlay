@@ -7,6 +7,7 @@ import logger from "morgan";
 import fileupload from "express-fileupload";
 import router from "./routes/api.js";
 import converterRoutes from "./server/converterRoute.js";
+import morgan from "morgan";
 dotenv.config();
 
 // Set up the express app
@@ -14,7 +15,7 @@ const app = express();
 
 // Log requests to the console
 app.use(logger("dev"));
-
+// app.use(morgan("combined"));
 const corsOptions = {
   origin: "*",
 };
