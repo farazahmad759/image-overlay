@@ -1,7 +1,7 @@
 import fs from "fs";
 import sharp from "sharp";
 import sizeOf from "image-size";
-
+import { debug_2by4Image } from "./../../config/debug.js";
 let mainUrls = {
   "t-shirt": {
     white: "assets/2020/07/MK-WhiteTshirt-MockUp-Blank-1.png",
@@ -16,6 +16,7 @@ let mainUrls = {
 };
 
 export async function get2by4Image(req, res) {
+  debug_2by4Image("hello");
   ////////////////////////////////////////////////
   // default values
   ////////////////////////////////////////////////
