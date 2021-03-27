@@ -11,7 +11,7 @@
     "babel": "./node_modules/.bin/babel src -d dist",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dev-win": "nodemon --exec babel-node src/bin/www",
-    "windowsDebug": "set DEBUG=('src/bin/www') & nodemon --exec babel-node src/bin/www"
+    "windowsDebug": "set DEBUG=app & nodemon --exec babel-node src/bin/www"
   },
   "keywords": [
     "node",
