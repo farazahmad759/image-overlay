@@ -14,9 +14,9 @@ const { document } = window;
 async function modifySVG(rootCanvas, id, property, value) {
   if (property === "background-colour") {
     let element = rootCanvas.find(`#${id}`);
+    let hexValue = "#" + value;
     element.map((inner) => {
       if (inner.type === "g") {
-        let hexValue = "#" + value;
         //its a group, fill the children
         inner.find("path").fill(hexValue);
       } else {
