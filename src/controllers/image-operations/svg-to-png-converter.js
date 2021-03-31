@@ -1,5 +1,5 @@
 import { createSVGWindow } from "svgdom";
-import { SVG, registerWindow } from "@svgdotjs/svg.js";
+import { SVG, registerWindow, Shape } from "@svgdotjs/svg.js";
 import sharp from "sharp";
 import fs from "fs";
 import {
@@ -32,17 +32,17 @@ export const svgToPngConverter = async (req, res) => {
   registerWindow(window, document);
 
   try {
-    let haha = await modifySVG(req.query.file, req.query.data);
+    let haha = await modifySVG(req.query.file, req.query.data, {
+      width: req.query.width,
+    });
     res.end(Buffer.from(haha, "utf-8"));
   } catch (e) {
     res.send(e);
   }
 };
 
-const modifySVG = async (file, data) => {
-  //
+const modifySVG = async (file, data, options = {}) => {
   return new Promise(async (resolve, reject) => {
-    //
     let fileContent = null;
     if (!fs.existsSync(file)) {
       reject("ERROR: File does not exist");
@@ -52,7 +52,7 @@ const modifySVG = async (file, data) => {
     fileContent = fileContent.split("?>");
     fileContent = fileContent.pop().split("-->");
     fileContent = fileContent.pop().trim();
-    let newFileName = "./downloads/" + file.split("/").pop();
+    let newFileName = "./downloads/" + file.split("/").pop() + Date.now();
     fs.writeFileSync(newFileName, fileContent, "utf-8");
     fileContent = fs.readFileSync(newFileName, "utf-8");
     let rootCanvas = SVG(fileContent);
@@ -62,23 +62,21 @@ const modifySVG = async (file, data) => {
         reject("ERROR: Data's id, property and value cannot be null");
         return null;
       }
-      console.log(" EROOR ================== ", rootCanvas.type);
       rootCanvas = await modifySvgProperty(rootCanvas, obj);
-      //   console.log("BEFORE");
     }
-    // data.forEach(async (obj) => {
-    //   if (!obj.id || !obj.property || !obj.value) {
-    //     reject("ERROR: Data's id, property and value cannot be null");
-    //     return null;
-    //   }
-    //   rootCanvas = await modifySvgProperty(rootCanvas, obj);
-    //   console.log("BEFORE");
-    // });
     let finalData = rootCanvas.svg();
     finalData = finalData.replace("svgjs:data", "svgjs");
     fs.writeFileSync(newFileName, finalData, "utf-8");
-    let out = await sharp(newFileName).png().toBuffer();
-    resolve(out);
+    try {
+      let out = await sharp(newFileName)
+        .resize({ width: parseInt(options.width) })
+        .png()
+        .toBuffer();
+      resolve(out);
+    } catch (e) {
+      debug_api_2by4_images("ERROR: ", e);
+      reject("ERROR");
+    }
   });
 };
 
@@ -86,13 +84,16 @@ async function modifySvgProperty(rootCanvas, propertyData) {
   if (propertyData.property === "background-colour") {
     propertyData.property = "background-color";
   }
-  //
   return new Promise((resolve, reject) => {
-    //
     if (propertyData.property === "background-color") {
       modifyBackgroundColor(rootCanvas, propertyData);
+      resolve(rootCanvas);
+    } else if (propertyData.property === "background-image") {
+      modifyBackgroundImage(rootCanvas, propertyData);
+      resolve(rootCanvas);
+    } else {
+      reject("ERROR: ");
     }
-    resolve(rootCanvas);
   });
 }
 
@@ -101,13 +102,115 @@ function modifyBackgroundColor(rootCanvas, propertyData) {
   let element = rootCanvas.find(`#${id}`);
   let hexValue = "#" + value;
   element.map((inner) => {
-    debug_api_convert_svg_to_png(inner);
     if (inner.type === "g") {
       //its a group, fill the children
       inner.find("path").fill(hexValue);
     } else {
       //is not a group, fill the element
       inner.fill(hexValue);
+    }
+  });
+}
+
+function modifyBackgroundImage(rootCanvas, propertyData) {
+  return new Promise((resolve, reject) => {
+    let { id, property, value } = propertyData;
+    if (!fs.existsSync(value, "base64")) {
+      reject("ERROR: background image does not exist");
+      return null;
+    }
+    const toBase64 = fs.readFileSync(value, "base64");
+    //svg processing
+    const box = rootCanvas.find(`#${id}`);
+
+    const polygon = document.createElement("defs");
+    const patternName = `hello-${id}-${Date.now()}`;
+    try {
+      //try to get the bbox on the first children of a group
+      console.log("======================== ", box.children());
+      const childrenEl = box.children()[0].bbox();
+      const { height, width, x, y } = childrenEl.pop();
+
+      if (value.toLowerCase().indexOf("gradient") !== -1) {
+        polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="100%" height="25%" x="0" y="${y}" preserveAspectRatio="xMidYMin meet">
+                <image href='data:image/jpeg;base64,${toBase64}' url='' width="100%" height="25%" preserveAspectRatio="xMidYMin slice" overflow="visible"  />
+                </pattern>`;
+      } else if (value.toLowerCase().indexOf("pattern") !== -1) {
+        polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="25%" height="25%" x="${x}" y="${y}" preserveAspectRatio="xMinYMid slice">
+                <image href='data:image/jpeg;base64,${toBase64}' url='' width="25%" height="25%" preserveAspectRatio="xMinYMid slice" overflow="visible"  />
+                </pattern>`;
+      } else {
+        polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="${width}" height="${height}" x="${x}" y="${y}">
+                <image href='data:image/jpeg;base64,${toBase64}' url='' width="${width}" height="${height}" preserveAspectRatio="none"  />
+                </pattern>`;
+      }
+
+      box.add(polygon);
+      box.find(`path`).fill(`url('#${patternName}')`);
+    } catch (err) {
+      //bbox not present, check other option
+      //could indicate is the outmost group
+      console.log(
+        "---> error with the bbox, trying with the parent element itself",
+        err
+      );
+      let topSVG = box.parent()[0];
+
+      let rootWidth = "100%";
+      let rootHeight = "100%";
+      let rootX = 0;
+      let rootY = 0;
+
+      if (topSVG && topSVG.width()) {
+        rootWidth = topSVG.width();
+      }
+      if (topSVG && topSVG.height()) {
+        rootWidth = topSVG.height();
+      }
+
+      if (value.toLowerCase().indexOf("gradient") !== -1) {
+        polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="100%" height="25%" x="0" y="${rootY}" preserveAspectRatio="xMidYMin meet">
+                <image href='data:image/jpeg;base64,${toBase64}' url='' width="100%" height="25%" preserveAspectRatio="xMidYMin slice" overflow="visible"  />
+                </pattern>`;
+      } else if (value.toLowerCase().indexOf("pattern") !== -1) {
+        polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="25%" height="25%" x="${rootX}" y="${rootY}" preserveAspectRatio="xMinYMid slice">
+                <image href='data:image/jpeg;base64,${toBase64}' url='' width="25%" height="25%" preserveAspectRatio="xMinYMid slice" overflow="visible"  />
+                </pattern>`;
+      } else {
+        //just a plain image
+        polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="${rootWidth}" height="${rootHeight}" x="${rootX}" y="${rootY}">
+                <image href='data:image/jpeg;base64,${toBase64}' url='' width="${rootWidth}" height="${rootHeight}" preserveAspectRatio="none"  />
+                </pattern>`;
+      }
+
+      //load the children
+      let childrenPath = box.find("path");
+      //check the children length
+      if (childrenPath[0].length > 0) {
+        box.add(polygon);
+        box.find(`path`).fill(`url('#${patternName}')`);
+      } else {
+        //other type of svg structure, for example from https://www.flaticon.com/
+        console.log("using last resort parsing");
+        const _bbox = box.bbox()[0];
+        const { height, width, x, y } = _bbox;
+
+        if (value.toLowerCase().indexOf("gradient") !== -1) {
+          polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="100%" height="25%" x="0" y="${y}" preserveAspectRatio="xMidYMin meet">
+                  <image href='data:image/jpeg;base64,${toBase64}' url='' width="100%" height="25%" preserveAspectRatio="none" overflow="visible"  />
+                  </pattern>`;
+        } else if (value.toLowerCase().indexOf("pattern") !== -1) {
+          polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="25%" height="25%" x="${x}" y="${y}" preserveAspectRatio="xMinYMid slice">
+                  <image href='data:image/jpeg;base64,${toBase64}' url='' width="25%" height="25%" preserveAspectRatio="xMinYMid slice" overflow="visible"  />
+                  </pattern>`;
+        } else {
+          polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="${width}" height="${height}" x="${x}" y="${y}">
+                  <image href='data:image/jpeg;base64,${toBase64}' url='' width="${width}" height="${height}" preserveAspectRatio="none"  />
+                  </pattern>`;
+        }
+        rootCanvas.add(polygon);
+        rootCanvas.find(`#${id}`).fill(`url('#${patternName}')`);
+      }
     }
   });
 }

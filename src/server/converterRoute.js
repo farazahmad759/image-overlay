@@ -4,6 +4,8 @@ import fs from "fs";
 import path from "path";
 import sharp from "sharp";
 import { apiCounters } from "./../apiCounters.js";
+import sizeOf from "image-size";
+
 const converterRoutes = (app) => {
   app.use((req, res, next) => {
     res.header(
@@ -128,10 +130,26 @@ const converterRoutes = (app) => {
       } else {
         let _out = await sharp(`downloads/${tempSVGFileName}`).png();
         if (req.query.shouldTrim && req.query.shouldTrim == "true") {
-          _out = await _out.trim().toFile(`downloads/${tempPngFileName}`);
-        } else {
-          _out = await _out.toFile(`downloads/${tempPngFileName}`);
+          _out = await _out.trim();
         }
+        let _outBuffer = await _out.toBuffer();
+        let _sizeOutBuffer = sizeOf(_outBuffer);
+        _out = await _out.toFile(`downloads/${tempPngFileName}`);
+        _out = await sharp({
+          create: {
+            width: parseInt(_sizeOutBuffer.width + 20),
+            height: parseInt(_sizeOutBuffer.height + 20),
+            channels: 4,
+            background: { r: 255, g: 255, b: 255, alpha: 1 },
+          },
+        })
+          .composite([
+            {
+              input: _outBuffer,
+            },
+          ])
+          .jpeg()
+          .toFile(`downloads/${tempPngFileName}`);
         //send the file to the client
 
         res.sendFile(path.resolve(`./downloads/${tempPngFileName}`), (err) => {
