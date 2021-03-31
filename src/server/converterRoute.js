@@ -148,7 +148,7 @@ const converterRoutes = (app) => {
               input: _outBuffer,
             },
           ])
-          .jpeg()
+          .png()
           .toFile(`downloads/${tempPngFileName}`);
         //send the file to the client
 
