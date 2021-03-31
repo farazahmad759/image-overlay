@@ -134,11 +134,12 @@ const converterRoutes = (app) => {
         }
         let _outBuffer = await _out.toBuffer();
         let _sizeOutBuffer = sizeOf(_outBuffer);
+        req.query.padding = req.query.padding ? parseInt(req.query.padding) : 0;
         _out = await _out.toFile(`downloads/${tempPngFileName}`);
         _out = await sharp({
           create: {
-            width: parseInt(_sizeOutBuffer.width + 20),
-            height: parseInt(_sizeOutBuffer.height + 20),
+            width: parseInt(_sizeOutBuffer.width + req.query.padding),
+            height: parseInt(_sizeOutBuffer.height + req.query.padding),
             channels: 4,
             background: { r: 255, g: 255, b: 255, alpha: 1 },
           },
