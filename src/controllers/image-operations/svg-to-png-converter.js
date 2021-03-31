@@ -6,6 +6,31 @@ import {
   debug_api_convert_svg_to_png,
   debug_api_2by4_images,
 } from "./../../config/debug.js";
+// import { query, validationResult } from "express-validator";
+import validate from "validate.js";
+let validationConstraints = {
+  file: {
+    presence: true,
+    type: "string",
+    length: {
+      minimum: 4,
+      message: "must be at least 4 characters",
+    },
+  },
+  data: {
+    presence: true,
+    type: "string",
+    length: {
+      minimum: 6,
+      message: "must be at least 6 characters",
+    },
+  },
+  width: {
+    presence: true,
+    type: "integer",
+  },
+};
+let validationErrors = null;
 // import Snap from "snapsvg";
 const LOGO_FILE_PATH = "assets/2020/12/MK_logo.png";
 const SVG_FILE_PATH = "assets/2021/03/CAN-of-WHOOPASS-Final.svg";
@@ -14,13 +39,14 @@ const window = createSVGWindow();
 const { document } = window;
 export const svgToPngConverter = async (req, res) => {
   // validation
-  if (!req.query.file) {
-    res.send("ERROR: File not provided");
-    return null;
-  }
-  if (!req.query.data) {
-    res.send("ERROR: Data cannot be empty");
-    return null;
+  // const errors = validationResult(req);
+  // if (!errors.isEmpty()) {
+  //   return res.status(400).json({ errors: errors.array() });
+  // }
+  req.query.width = req.query.width ? parseInt(req.query.width) : 1000;
+  validationErrors = validate({ ...req.query }, validationConstraints);
+  if (validationErrors) {
+    return res.send(validationErrors);
   }
   try {
     req.query.data = JSON.parse(req.query.data);
@@ -127,7 +153,7 @@ function modifyBackgroundImage(rootCanvas, propertyData) {
     const patternName = `hello-${id}-${Date.now()}`;
     try {
       //try to get the bbox on the first children of a group
-      console.log("======================== ", box.children());
+      // console.log("======================== ", box.children());
       const childrenEl = box.children()[0].bbox();
       const { height, width, x, y } = childrenEl.pop();
 

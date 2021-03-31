@@ -39,6 +39,7 @@
     "sizeof": "^1.0.0",
     "snapsvg": "^0.5.1",
     "svgdom": "^0.1.8",
+    "validate.js": "^0.13.1",
     "yargs": "^16.2.0"
   },
   "devDependencies": {

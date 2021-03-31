@@ -8,8 +8,17 @@ import {
   getAnImageFromApi,
   convertSvgToPng,
 } from "../controllers/tempOperations.js";
+// import { query, body } from "express-validator";
+
+// console.log(query().isString());
 let router = express.Router();
-router.get("/v1/convertSvgToPng", svgToPngConverter);
+router.get(
+  "/v1/convertSvgToPng",
+  // query("file").isString(),
+  // query("data").isString(),
+  // query("width").isInt(),
+  svgToPngConverter
+);
 router.get("/v1/get4by4Image", get4by4Image);
 router.get("/v1/get2by4Image", get2by4Image);
 //
