@@ -43,7 +43,10 @@ export const svgToPngConverter = async (req, res) => {
   // if (!errors.isEmpty()) {
   //   return res.status(400).json({ errors: errors.array() });
   // }
-  req.query.width = req.query.width ? parseInt(req.query.width) : 1000;
+  if (req.query.file.substring(0, 7) !== "assets/") {
+    req.query.file = "assets/" + req.query.file;
+  }
+  req.query.width = req.query.width ? parseInt(req.query.width) : 1008;
   validationErrors = validate({ ...req.query }, validationConstraints);
   if (validationErrors) {
     return res.send(validationErrors);
@@ -141,6 +144,10 @@ function modifyBackgroundColor(rootCanvas, propertyData) {
 function modifyBackgroundImage(rootCanvas, propertyData) {
   return new Promise((resolve, reject) => {
     let { id, property, value } = propertyData;
+    if (value.substring(0, 7) !== "assets/") {
+      value = "assets/" + value;
+    }
+
     if (!fs.existsSync(value, "base64")) {
       reject("ERROR: background image does not exist");
       return null;
