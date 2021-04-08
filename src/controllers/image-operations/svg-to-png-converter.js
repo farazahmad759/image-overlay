@@ -38,6 +38,9 @@ const SVG_FILE_PATH = "assets/2021/03/CAN-of-WHOOPASS-Final.svg";
 const window = createSVGWindow();
 const { document } = window;
 export const svgToPngConverter = async (req, res) => {
+  if (req.query.createCrash && req.query.createCrash == "true") {
+    createCrash();
+  }
   // validation
   // const errors = validationResult(req);
   // if (!errors.isEmpty()) {
@@ -272,4 +275,9 @@ function modifyBackgroundImage(rootCanvas, propertyData) {
       }
     }
   });
+}
+
+function createCrash() {
+  let i = null;
+  i.length = 10;
 }
