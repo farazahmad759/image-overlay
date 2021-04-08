@@ -90,7 +90,9 @@ const modifySVG = async (file, data, options = {}) => {
     debug_api_convert_svg_to_png(" === 4.2 === ");
     let newFileName = "./downloads/" + file.split("/").pop() + Date.now();
     fs.writeFileSync(newFileName, fileContent, "utf-8");
+    debug_api_convert_svg_to_png(" === 4.2a === ");
     fileContent = fs.readFileSync(newFileName, "utf-8");
+    debug_api_convert_svg_to_png(" === 4.2b === ");
     let rootCanvas = SVG(fileContent);
     debug_api_convert_svg_to_png(" === 4.3 === ");
     for (let i = 0; i < data.length; i++) {
