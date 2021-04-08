@@ -239,7 +239,11 @@ function modifyBackgroundImage(rootCanvas, propertyData) {
       //load the children
       let childrenPath = box.find("path");
       //check the children length
-      if (childrenPath[0].length > 0) {
+      if (
+        childrenPath &&
+        typeof childrenPath === typeof [] &&
+        childrenPath[0].length > 0
+      ) {
         box.add(polygon);
         box.find(`path`).fill(`url('#${patternName}')`);
       } else {
