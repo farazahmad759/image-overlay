@@ -43,7 +43,8 @@ export const svgToPngConverter = async (req, res) => {
   // if (!errors.isEmpty()) {
   //   return res.status(400).json({ errors: errors.array() });
   // }
-  if (req.query.file.substring(0, 7) !== "assets/") {
+  debug_api_convert_svg_to_png(" === 1 === ");
+  if (req.query.file && req.query.file.substring(0, 7) !== "assets/") {
     req.query.file = "assets/" + req.query.file;
   }
   req.query.width = req.query.width ? parseInt(req.query.width) : 1008;
@@ -57,13 +58,17 @@ export const svgToPngConverter = async (req, res) => {
     res.send("ERROR: Cannot parse data");
     return null;
   }
+  debug_api_convert_svg_to_png(" === 2 === ");
   // perform conversion
   registerWindow(window, document);
+  debug_api_convert_svg_to_png(" === 3 === ");
 
   try {
+    debug_api_convert_svg_to_png(" === 4 === ");
     let haha = await modifySVG(req.query.file, req.query.data, {
       width: req.query.width,
     });
+    debug_api_convert_svg_to_png(" === 5 === ");
     res.end(Buffer.from(haha, "utf-8"));
   } catch (e) {
     res.send(e);
@@ -72,6 +77,7 @@ export const svgToPngConverter = async (req, res) => {
 
 const modifySVG = async (file, data, options = {}) => {
   return new Promise(async (resolve, reject) => {
+    debug_api_convert_svg_to_png(" === 4.1 === ");
     let fileContent = null;
     if (!fs.existsSync(file)) {
       reject("ERROR: File does not exist");
@@ -81,10 +87,12 @@ const modifySVG = async (file, data, options = {}) => {
     fileContent = fileContent.split("?>");
     fileContent = fileContent.pop().split("-->");
     fileContent = fileContent.pop().trim();
+    debug_api_convert_svg_to_png(" === 4.2 === ");
     let newFileName = "./downloads/" + file.split("/").pop() + Date.now();
     fs.writeFileSync(newFileName, fileContent, "utf-8");
     fileContent = fs.readFileSync(newFileName, "utf-8");
     let rootCanvas = SVG(fileContent);
+    debug_api_convert_svg_to_png(" === 4.3 === ");
     for (let i = 0; i < data.length; i++) {
       let obj = data[i];
       if (!obj.id || !obj.property || !obj.value) {
@@ -93,15 +101,19 @@ const modifySVG = async (file, data, options = {}) => {
       }
       rootCanvas = await modifySvgProperty(rootCanvas, obj);
     }
+    debug_api_convert_svg_to_png(" === 4.4 === ");
     let finalData = rootCanvas.svg();
     finalData = finalData.replace("svgjs:data", "svgjs");
     fs.writeFileSync(newFileName, finalData, "utf-8");
+    debug_api_convert_svg_to_png(" === 4.5 === ");
     try {
       let out = await sharp(newFileName)
         .resize({ width: parseInt(options.width) })
         .png()
         .toBuffer();
+      debug_api_convert_svg_to_png(" === 4.6 === ");
       resolve(out);
+      debug_api_convert_svg_to_png(" === 4.7 === ");
     } catch (e) {
       debug_api_2by4_images("ERROR: ", e);
       reject("ERROR");
@@ -114,6 +126,7 @@ async function modifySvgProperty(rootCanvas, propertyData) {
     propertyData.property = "background-color";
   }
   return new Promise((resolve, reject) => {
+    debug_api_convert_svg_to_png(" === 4.3.1 === ", propertyData.property);
     if (propertyData.property === "background-color") {
       modifyBackgroundColor(rootCanvas, propertyData);
       resolve(rootCanvas);
@@ -123,6 +136,7 @@ async function modifySvgProperty(rootCanvas, propertyData) {
     } else {
       reject("ERROR: ");
     }
+    debug_api_convert_svg_to_png(" === 4.3.2 === ", propertyData.property);
   });
 }
 
@@ -131,6 +145,7 @@ function modifyBackgroundColor(rootCanvas, propertyData) {
   let element = rootCanvas.find(`#${id}`);
   let hexValue = "#" + value;
   element.map((inner) => {
+    console.log(" ===================  = ");
     if (inner.type === "g") {
       //its a group, fill the children
       inner.find("path").fill(hexValue);
@@ -143,8 +158,9 @@ function modifyBackgroundColor(rootCanvas, propertyData) {
 
 function modifyBackgroundImage(rootCanvas, propertyData) {
   return new Promise((resolve, reject) => {
+    debug_api_convert_svg_to_png(" === 4.3.1.1 === ", propertyData.property);
     let { id, property, value } = propertyData;
-    if (value.substring(0, 7) !== "assets/") {
+    if (value && value.substring(0, 7) !== "assets/") {
       value = "assets/" + value;
     }
 
@@ -158,6 +174,7 @@ function modifyBackgroundImage(rootCanvas, propertyData) {
 
     const polygon = document.createElement("defs");
     const patternName = `hello-${id}-${Date.now()}`;
+    debug_api_convert_svg_to_png(" === 4.3.1.2 === ", propertyData.property);
     try {
       //try to get the bbox on the first children of a group
       // console.log("======================== ", box.children());
@@ -168,14 +185,17 @@ function modifyBackgroundImage(rootCanvas, propertyData) {
         polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="100%" height="25%" x="0" y="${y}" preserveAspectRatio="xMidYMin meet">
                 <image href='data:image/jpeg;base64,${toBase64}' url='' width="100%" height="25%" preserveAspectRatio="xMidYMin slice" overflow="visible"  />
                 </pattern>`;
+        debug_api_convert_svg_to_png(" === 4.3.1.3 (gradient) === ");
       } else if (value.toLowerCase().indexOf("pattern") !== -1) {
         polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="25%" height="25%" x="${x}" y="${y}" preserveAspectRatio="xMinYMid slice">
                 <image href='data:image/jpeg;base64,${toBase64}' url='' width="25%" height="25%" preserveAspectRatio="xMinYMid slice" overflow="visible"  />
                 </pattern>`;
+        debug_api_convert_svg_to_png(" === 4.3.1.3 (pattern) === ");
       } else {
         polygon.innerHTML = `<pattern id="${patternName}" patternUnits="userSpaceOnUse" width="${width}" height="${height}" x="${x}" y="${y}">
                 <image href='data:image/jpeg;base64,${toBase64}' url='' width="${width}" height="${height}" preserveAspectRatio="none"  />
                 </pattern>`;
+        debug_api_convert_svg_to_png(" === 4.3.1.3 (other) === ");
       }
 
       box.add(polygon);
